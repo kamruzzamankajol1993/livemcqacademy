@@ -89,29 +89,33 @@ class SystemInformationController extends Controller
     ]);
 }
 
-    public function index()
-    {
-        try{
+   public function index()
+{
+    try{
+        // Branch Info লাগবে কারণ edit পেজে ড্রপডাউন আছে
+        $branchInfo = Branch::latest()->get();
+        
+        $panelSettingInfo = null;
 
-            if(Auth::user()->id == 1){
-                $panelSettingInfo = SystemInformation::latest()->get();
+        // ডাটা খোঁজার লজিক (Edit মেথডের মতো)
+       
+            $panelSettingInfo = SystemInformation::latest()->first();
+       
 
-            }else{
-$panelSettingInfo = SystemInformation::where('branch_id',Auth::user()->branch_id)->latest()->get();
-            }
-
-            
-
-            CommonController::addToLog('panelSettingView');
-
-            return view('admin.panelSettingInfo.panelList',compact('panelSettingInfo'));
-
-        } catch (\Exception $e) {
-    
-            return redirect()->route('error_500');
-           
+        // যদি ডাটা না থাকে, তাহলে Create পেজে পাঠাবে
+        if (!$panelSettingInfo) {
+            return redirect()->route('systemInformation.create');
         }
+
+        CommonController::addToLog('panelSettingView');
+
+        // লিস্টের বদলে সরাসরি edit ব্লেড রিটার্ন করা হলো
+        return view('admin.panelSettingInfo.edit', compact('branchInfo', 'panelSettingInfo'));
+
+    } catch (\Exception $e) {
+        return redirect()->route('error_500');
     }
+}
 
 
     public function create()

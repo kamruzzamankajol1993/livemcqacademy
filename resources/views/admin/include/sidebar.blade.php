@@ -4,7 +4,7 @@
 
  <nav id="sidebar">
             <div class="sidebar-header">
-                <img src="{{asset('/')}}public/logo.png" alt="{{ $ins_name }} Logo" class="img-fluid">
+                <img src="{{asset('/')}}{{$front_logo_name}}" alt="{{ $ins_name }} Logo" class="img-fluid">
             </div>
             <ul class="nav flex-column" id="sidebar-menu">
                  @if ($usr->can('dashboardView'))
@@ -436,19 +436,9 @@
                     <span>Settings</span>
                 </li>
 
-                 <li class="nav-item">
-                    <a class="nav-link {{ Route::is('setting.sms.index')  ? 'active' : '' }}" href="{{ route('setting.sms.index') }}">
-                        <i data-feather="folder"></i>
-                        <span>SMS Setting</span>
-                    </a>
-                </li>
-{{-- NEW AREA WISE PRICE LINK --}}
+               
                 <li class="nav-item">
-                    <a class="nav-link {{ Route::is('area-wise-price.*')  ? 'active' : '' }}" href="{{ route('area-wise-price.index') }}">
-                        <i data-feather="map-pin"></i>
-                        <span>Area Wise Price(Text)</span>
-                    </a>
-                </li>
+                    
                 {{-- END NEW LINK --}}
                 <li class="nav-item">
                     <a class="nav-link" href="#accountSettingsSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="accountSettingsSubmenu">
@@ -465,11 +455,7 @@
                     @endif
 
 
-                          @if ($usr->can('branchAdd') || $usr->can('branchView') ||  $usr->can('branchDelete') ||  $usr->can('branchUpdate'))
-
-                        <a class="nav-link {{ Route::is('branch.index') || Route::is('branch.edit') || Route::is('branch.create') ? 'active' : '' }}" href="{{ route('branch.index') }}">Branch</a>
-
-                    @endif
+                         
 
 
                     @if ($usr->can('userAdd') || $usr->can('userView') ||  $usr->can('userDelete') ||  $usr->can('userUpdate'))

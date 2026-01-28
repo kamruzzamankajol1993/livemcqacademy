@@ -44,7 +44,7 @@
                 rows += `
                     <tr>
                         <td>${sl}</td>
-                        <td>${item.branch_name ?? ''}</td>
+              
                         <td><img src="${profile}" style="height:30px;" onerror="this.src='{{ asset('/') }}public/No_Image_Available.jpg';"></td>
                         <td>${item.name}</td>
                         <td>${item.designation_name ?? ''}</td>
@@ -52,7 +52,7 @@
                         <td>${item.email}</td>
                         <td>${item.address}</td>
                         <td>${roles}</td>
-                            <td>${shareholderStatus}</td>
+                       
                         <td>${statusBadge}</td>
                         <td>${item.viewpassword}</td>
                         <td>

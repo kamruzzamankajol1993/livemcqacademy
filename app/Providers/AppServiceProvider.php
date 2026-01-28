@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
 
                 $front_icon_name = $frontEndData->icon;
                 $front_logo_name = $frontEndData->logo;
+                $front_mobile_version_logo_name = $frontEndData->mobile_version_logo;
                 $front_ins_name = $frontEndData->ins_name;
                 $front_ins_add = $frontEndData->address;
                 $front_ins_email = $frontEndData->email;
@@ -63,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
                 $front_ins_add = '';
                 $front_ins_email = '';
                 $front_ins_phone = '';
-
+$front_mobile_version_logo_name='';
                 // Added default for secondary phone
                 $front_ins_phone_one = '';
 
@@ -72,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
                 $front_develop_by = '';
             }
 
+              view()->share('front_mobile_version_logo_name', $front_mobile_version_logo_name);
               view()->share('front_icon_name', $front_icon_name);
               view()->share('front_logo_name', $front_logo_name);
               view()->share('front_ins_name', $front_ins_name);

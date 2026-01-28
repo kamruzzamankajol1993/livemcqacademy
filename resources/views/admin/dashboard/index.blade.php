@@ -45,9 +45,9 @@ Dashboard
         text-decoration: none;
     }
     .filter-btn.active {
-        background-color: #212529; /* Black background */
+        background-color: #1e2939; /* Black background */
         color: #fff; /* White text */
-        border-color: #212529;
+        border-color: #1e2939;
     }
     .filter-btn:focus {
         box-shadow: none;

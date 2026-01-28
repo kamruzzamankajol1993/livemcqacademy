@@ -62,19 +62,9 @@ Create Panel Info | {{ $ins_name }}
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                             <div class="row mt-4">
-                                @if(Auth::user()->id == 1)
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Branch Name<span class="text-danger font-w900">*</span></label>
-                                    <select name="branch_id" class="form-control" required>
-                                        <option value="">-- Select Branch --</option>
-                                        @foreach($branchInfo as $branchInfos)
-                                        <option value="{{ $branchInfos->id }}">{{ $branchInfos->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @else
+                           
                                 <input type="hidden" name="branch_id" value="{{ Auth::user()->branch_id }}">
-                                @endif
+                          
 
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">System Name<span class="text-danger font-w900">*</span></label>
@@ -87,7 +77,7 @@ Create Panel Info | {{ $ins_name }}
                                 </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Frontend URL<span class="text-danger font-w900">*</span></label>
+                                    <label class="form-label">Api URL<span class="text-danger font-w900">*</span></label>
                                     <input type="text" class="form-control" name="front_url" placeholder="e.g., https://www.example.com" required>
                                 </div>
 
@@ -133,13 +123,13 @@ Create Panel Info | {{ $ins_name }}
                                 
 
                                 <div class="col-md-12 mb-4">
-                                    <label class="form-label">Mobile Version(Logo)<span class="text-danger font-w900">*</span></label>
-                                    <input type="file" class="form-control" name="mobile_version_logo" required onchange="previewImage(this, 'mobile-logo-preview')">
-                                    <div class="image-preview-container mt-2">
-                                        <img id="mobile-logo-preview" class="image-preview" alt="Logo Preview">
-                                        <span class="preview-text">130x30</span>
-                                    </div>
-                                </div>
+    <label class="form-label">App Logo<span class="text-danger font-w900">*</span></label>
+    <input type="file" class="form-control" name="mobile_version_logo" required onchange="previewImage(this, 'mobile-logo-preview')">
+    <div class="image-preview-container mt-2">
+        <img id="mobile-logo-preview" class="image-preview" alt="Logo Preview">
+        <span class="preview-text">130x30</span>
+    </div>
+</div>
 
 
                                 <div class="col-md-6 mb-4">
@@ -173,7 +163,7 @@ Create Panel Info | {{ $ins_name }}
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Developed By</label>
-                                    <input type="text" class="form-control" readonly value="Resnova Tech Limited" name="develop_by">
+                                    <input type="text" class="form-control" readonly value="Upgrade Uinitiative" name="develop_by">
                                 </div>
                             </div>
                         </div>

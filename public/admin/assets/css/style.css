@@ -1,7 +1,7 @@
 :root {
     /* Deep Slate Blue - feels professional and trustworthy */
-    --primary-color: #0f172a;       
-    --accent-color: #00C964;        
+    --primary-color: #1e2939;       
+    --accent-color: #00c951;        
     
     /* Blue-tinted light gray for harmony */
     --light-gray: #f1f5f9;          
@@ -9,7 +9,7 @@
     
     /* Slate text */
     --text-color: #334155;          
-    --sidebar-width: 260px;
+    --sidebar-width: 240px;
 }
 
 body {
@@ -71,7 +71,7 @@ body {
     padding: 0.8rem 1.5rem;
     color: var(--accent-color);
     font-weight: 600;
-    font-size: 0.9em;
+    font-size: 12.5px;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 1rem;
@@ -85,6 +85,7 @@ body {
     transition: all 0.2s ease-in-out;
     font-weight: 500;
     justify-content: flex-start;
+    font-size:13px;
 }
 
 #sidebar .nav-link:hover, 
@@ -118,14 +119,14 @@ body {
 
 #sidebar .collapse .nav-link {
     padding-left: 3.5rem;
-    font-size: 0.9em;
+    font-size: 13px;
     color: #d0d0d0;
 }
 
 #sidebar .collapse .nav-link:hover,
 #sidebar .collapse .nav-link.active {
     color: #fff;
-    background: #2f2d2afa;
+    background: #01193d;
 }
 
 /* --- Main Content Styles --- */
@@ -163,6 +164,11 @@ body {
 .sidebar-toggler-btn:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--primary-color);
+}
+
+
+.main-content h2 {
+    font-size: 20px !important;
 }
 
 .dropdown-menu-custom {

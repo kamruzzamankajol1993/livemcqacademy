@@ -62,21 +62,9 @@ Update Panel Setting | {{ $ins_name }}
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                             <div class="row mt-4">
-                                @if(Auth::user()->id == 1)
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Branch Name<span class="text-danger font-w900">*</span></label>
-                                    <select name="branch_id" class="form-control" required>
-                                        <option value="">-- Select Branch --</option>
-                                        @foreach($branchInfo as $branchInfos)
-                                        <option value="{{ $branchInfos->id }}" {{ $panelSettingInfo->branch_id == $branchInfos->id ? 'selected' : '' }}>
-                                            {{ $branchInfos->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @else
+                               
                                 <input type="hidden" name="branch_id" value="{{ Auth::user()->branch_id }}">
-                                @endif
+                               
 
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">System Name<span class="text-danger font-w900">*</span></label>
@@ -89,7 +77,7 @@ Update Panel Setting | {{ $ins_name }}
                                 </div>
 
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Frontend URL<span class="text-danger font-w900">*</span></label>
+                                    <label class="form-label">Api URL<span class="text-danger font-w900">*</span></label>
                                     <input type="text" class="form-control" name="front_url" value="{{ $panelSettingInfo->front_url }}" placeholder="e.g., https://www.example.com" required>
                                 </div>
 
@@ -131,10 +119,10 @@ Update Panel Setting | {{ $ins_name }}
                                     <label class="form-label">Service Charge (%)<span class="text-danger font-w900">*</span></label>
                                     <input type="number" class="form-control" name="charge" value="{{ $panelSettingInfo->charge }}" placeholder="e.g., 5" required>
                                 </div>
-                                 <div class="col-md-12 mb-4">
-    <label class="form-label">Mobile Version(Logo)<span class="text-danger font-w900">*</span></label>
+                               <div class="col-md-12 mb-4">
+    <label class="form-label">App Logo<span class="text-danger font-w900">*</span></label>
     <input type="file" class="form-control" name="mobile_version_logo"  onchange="previewImage(this, 'mobile-logo-preview')">
-                                        <small class="form-text text-muted">Leave blank to keep the current logo.</small>
+    <small class="form-text text-muted">Leave blank to keep the current logo.</small>
     <div class="image-preview-container mt-2">
         <img id="mobile-logo-preview" 
              src="{{ $panelSettingInfo->mobile_version_logo ? asset($panelSettingInfo->mobile_version_logo) : '' }}" 
@@ -178,7 +166,7 @@ Update Panel Setting | {{ $ins_name }}
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Developed By</label>
-                                    <input type="text" class="form-control" readonly value="{{ $panelSettingInfo->develop_by }}" name="develop_by">
+                                    <input type="text" class="form-control"  value="{{ $panelSettingInfo->develop_by }}" name="develop_by">
                                 </div>
                             </div>
                         </div>
