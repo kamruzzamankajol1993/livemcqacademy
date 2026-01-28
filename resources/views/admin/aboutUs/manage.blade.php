@@ -133,7 +133,7 @@ Manage About Us Page | {{ $ins_name ?? 'Your App Name' }}
                 @endif
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="mb-4">
                             <label for="image" class="form-label fs-5">Image</label>
                             <input type="file" class="form-control" id="image" name="image" {{ !isset($aboutUs) ? 'required' : '' }}>
@@ -142,12 +142,7 @@ Manage About Us Page | {{ $ins_name ?? 'Your App Name' }}
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                         <div class="mb-4">
-                            <label for="youtube_video_link" class="form-label fs-5">YouTube Video Link</label>
-                            <input type="url" class="form-control" id="youtube_video_link" name="youtube_video_link" placeholder="link" value="{{ old('youtube_video_link', $aboutUs->youtube_video_link ?? '') }}">
-                        </div>
-                    </div>
+                   
                 </div>
 
                 <div class="mb-4">

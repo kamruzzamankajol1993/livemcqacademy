@@ -29,7 +29,7 @@ class AboutUsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'youtube_video_link' => 'nullable|url',
             'des' => 'required|string',
         ]);
