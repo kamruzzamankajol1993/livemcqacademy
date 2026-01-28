@@ -1,9 +1,14 @@
 :root {
-    --primary-color: black;
-    --accent-color: #ffd66b;
-    --light-gray: #f8f9fa;
-    --dark-gray: #6c757d;
-    --text-color: #343a40;
+    /* Deep Slate Blue - feels professional and trustworthy */
+    --primary-color: #0f172a;       
+    --accent-color: #00C964;        
+    
+    /* Blue-tinted light gray for harmony */
+    --light-gray: #f1f5f9;          
+    --dark-gray: #64748b;           
+    
+    /* Slate text */
+    --text-color: #334155;          
     --sidebar-width: 260px;
 }
 

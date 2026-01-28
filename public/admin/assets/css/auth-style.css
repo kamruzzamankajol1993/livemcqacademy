@@ -99,7 +99,7 @@ body {
 }
 
 .form-control:focus {
-    border-color: #ffd66b; /* Accent Color */
+    border-color: #00C964; /* Accent Color */
     background-color: #fff;
     box-shadow: 0 0 0 0.25rem rgba(255, 214, 107, 0.3);
 }
@@ -112,7 +112,7 @@ body {
     transition: all 0.2s ease;
 }
 .form-control:focus + .input-group-text {
-    border-color: #ffd66b;
+    border-color: #00C964;
     background-color: #fff;
 }
 
@@ -129,7 +129,7 @@ body {
    Main Action Button
 ================================================== */
 .auth-btn {
-    background-color: #ffd66b; /* Accent Color */
+    background-color: #00C964; /* Accent Color */
     color: black; /* Primary Color Text */
     border: none;
     border-radius: 0.5rem;
