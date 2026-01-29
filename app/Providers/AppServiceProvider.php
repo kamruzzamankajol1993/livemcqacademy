@@ -26,13 +26,13 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrapFive();
 
-    
-        // Add this code block
-        Relation::morphMap([
-            'offer' => 'App\Models\Offer',
-            'service' => 'App\Models\Service',
-        ]);
-        ///new code start
+    $globalFeatures = \App\Models\Feature::where('status', 1)
+                    ->whereNull('parent_id') // সাব-ফিচার বাদ দিয়ে মেইন ফিচার আনার জন্য
+                    ->orderBy('id', 'asc') // বা serial কলাম থাকলে serial দিয়ে অর্ডার করতে পারেন
+                    ->get();
+
+view()->share('globalFeatures', $globalFeatures);
+        
 
         view()->composer('*', function ($view)
         {

@@ -12,42 +12,63 @@ class Category extends Model
 
     protected $fillable = [
         'parent_id',
-        'name',
+        'feature_id', // New
+        'name',       // আগের name কলাম (English Name হিসেবেও ব্যবহার হতে পারে)
+        'english_name', // New
+        'bangla_name', // New
         'slug',
         'image',
+        'color',      // New
+        'serial',     // New
         'status',
     ];
 
     protected $guarded = ['id'];
 
-    // Automatically create a slug from the name
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($category) {
-            if (empty($category->slug)) {
-                $category->slug = Str::slug($category->name);
-            }
+            // Priority: English Name > Name > Bangla Name
+            $name = $category->english_name ?: ($category->name ?: $category->bangla_name);
+            $category->slug = static::createUniqueSlug($name);
         });
 
         static::updating(function ($category) {
-            if ($category->isDirty('name')) {
-                 $category->slug = Str::slug($category->name);
+            if ($category->isDirty('english_name') || $category->isDirty('name') || $category->isDirty('bangla_name')) {
+                 $name = $category->english_name ?: ($category->name ?: $category->bangla_name);
+                 $category->slug = static::createUniqueSlug($name, $category->id);
             }
         });
     }
 
-     public function parent()
+    private static function createUniqueSlug($name, $ignoreId = null)
+    {
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $count = 1;
+
+        while (static::where('slug', $slug)->where('id', '!=', $ignoreId)->exists()) {
+            $slug = $originalSlug . '-' . $count;
+            $count++;
+        }
+        return $slug;
+    }
+
+    public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
-    /**
-     * Get the child categories.
-     */
     public function children()
     {
         return $this->hasMany(Category::class, 'parent_id');
+    }
+    
+    // Feature রিলেশন
+    public function feature()
+    {
+        return $this->belongsTo(Feature::class, 'feature_id');
     }
 }
