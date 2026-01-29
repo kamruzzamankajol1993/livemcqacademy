@@ -93,6 +93,10 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::group(['middleware' => ['auth']], function() {
 
+
+
+Route::get('ajax-mcq-institutes', [App\Http\Controllers\Admin\McqQuestionController::class, 'getInstitutesByType'])->name('mcq.ajax.institutes');
+
 Route::resource('mcq', McqQuestionController::class);
 // MCQ AJAX Data Route
 Route::get('ajax-mcq-list', [App\Http\Controllers\Admin\McqQuestionController::class, 'data'])->name('mcq.ajax.data');

@@ -27,21 +27,34 @@
                 {{-- Section 1: Academic Information --}}
                 <div class="row mb-4 p-3 bg-light rounded border">
                     <h6 class="text-primary mb-3"><i class="fa fa-university me-1"></i> Academic Info (Optional)</h6>
-                    <div class="col-md-4 mb-3">
-                        <label>Institute</label>
-                        <select name="institute_id" class="form-control select2">
-                            <option value="">Select Institute</option>
-                            @foreach($institutes as $i) <option value="{{ $i->id }}">{{ $i->name_en }}</option> @endforeach
+                    
+                    {{-- New: Institute Type --}}
+                    <div class="col-md-3 mb-3">
+                        <label>Institute Type</label>
+                        <select id="institute_type" class="form-control select2">
+                            <option value="">Select Type</option>
+                            <option value="school">School</option>
+                            <option value="college">College</option>
+                            <option value="university">University</option>
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
+
+                    {{-- Institute (Loads via AJAX based on Type) --}}
+                    <div class="col-md-3 mb-3">
+                        <label>Institute</label>
+                        <select name="institute_id" id="institute_id" class="form-control select2">
+                            <option value="">Select Institute</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
                         <label>Board</label>
                         <select name="board_id" class="form-control select2">
                             <option value="">Select Board</option>
                             @foreach($boards as $b) <option value="{{ $b->id }}">{{ $b->name_en }}</option> @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label>Academic Year</label>
                         <select name="year_id" class="form-control select2">
                             <option value="">Select Year</option>
@@ -113,22 +126,15 @@
                     <small class="text-muted mb-3 d-block ps-3">* Click the radio button to select the correct answer.</small>
                 </div>
 
-                {{-- Section 4: Metadata --}}
+                {{-- Section 4: Metadata (Upload Type Removed) --}}
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-8 mb-3">
                         <label>Tags</label>
                         <select name="tags[]" class="form-control select2" multiple="multiple">
                             {{-- Users can type new tags --}}
                         </select>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label>Upload Type</label>
-                        <select name="upload_type" class="form-control">
-                            <option value="subject_wise" selected>Subject Wise</option>
-                            <option value="general">General</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label>Status</label>
                         <select name="status" class="form-control">
                             <option value="1">Active</option>
@@ -157,6 +163,7 @@
         $('.summernote').summernote({ height: 150 });
 
         var routes = {
+            institutes: "{{ route('mcq.ajax.institutes') }}",
             classes: "{{ route('mcq.ajax.classes') }}",
             departments: "{{ route('mcq.ajax.departments') }}",
             subjects: "{{ route('mcq.ajax.subjects') }}",
@@ -164,13 +171,31 @@
             topics: "{{ route('mcq.ajax.topics') }}",
         };
 
-        // 1. Category -> Class
+        // --- 1. Institute Type -> Institute ---
+        $('#institute_type').on('change', function() {
+            var type = $(this).val();
+            $('#institute_id').html('<option value="">Loading...</option>');
+            
+            if(type) {
+                $.get(routes.institutes, { type: type }, function(res) {
+                    var ops = '<option value="">Select Institute</option>';
+                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
+                    $('#institute_id').html(ops);
+                });
+            } else {
+                $('#institute_id').html('<option value="">Select Institute</option>');
+            }
+        });
+
+        // --- 2. Category -> Class ---
         $('#category_id').on('change', function() {
             var id = $(this).val();
             $('#class_id').html('<option value="">Loading...</option>');
             // Reset downstream
             $('#department_id').html('<option value="">Select Department</option>');
             $('#subject_id').html('<option value="">Select Subject</option>');
+            $('#chapter_id').html('<option value="">Select Chapter</option>');
+            $('#topic_id').html('<option value="">Select Topic</option>');
 
             if(id) {
                 $.get(routes.classes, { category_id: id }, function(res) {
@@ -183,7 +208,7 @@
             }
         });
 
-        // 2. Class -> Department AND Subject (Default)
+        // --- 3. Class -> Department AND Subject ---
         $('#class_id').on('change', function() {
             var clsId = $(this).val();
             
@@ -196,7 +221,7 @@
                     $('#department_id').html(ops);
                 });
 
-                // Load Subjects (By Class only initially)
+                // Load Subjects (Initially based on Class only)
                 loadSubjects(clsId, null);
             } else {
                 $('#department_id').html('<option value="">Select Department</option>');
@@ -204,7 +229,7 @@
             }
         });
 
-        // 3. Department -> Reload Subject (Class + Dept)
+        // --- 4. Department -> Reload Subject ---
         $('#department_id').on('change', function() {
             var deptId = $(this).val();
             var clsId = $('#class_id').val();
@@ -220,7 +245,7 @@
             });
         }
 
-        // 4. Subject -> Chapter (Depends on Subject AND Class)
+        // --- 5. Subject -> Chapter (Depends on Subject AND Class) ---
         $('#subject_id').on('change', function() {
             var subId = $(this).val();
             var clsId = $('#class_id').val();
@@ -237,7 +262,7 @@
             }
         });
 
-        // 5. Chapter -> Topic
+        // --- 6. Chapter -> Topic ---
         $('#chapter_id').on('change', function() {
             var chapId = $(this).val();
             if(chapId) {

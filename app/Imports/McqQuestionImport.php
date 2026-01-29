@@ -14,116 +14,155 @@ use App\Models\Chapter;
 use App\Models\Topic;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Exception;
+use Illuminate\Support\Str;
 
 class McqQuestionImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        // প্রশ্ন না থাকলে স্কিপ করবে
+        // 1. Basic Validation: Question is mandatory
         if (!isset($row['question']) || empty($row['question'])) {
             return null;
         }
 
-        // --- 1. Find IDs & Validation ---
+        // --- A. HELPER: First Or Create Logic ---
 
-        // Institute Check
+        // 1. Institute
         $institute_id = null;
         if (!empty($row['institute_name'])) {
-            $institute = Institute::where('name_en', trim($row['institute_name']))->first();
-            if (!$institute) {
-                throw new Exception("Institute '{$row['institute_name']}' not found! Please add data in Institute table first.");
-            }
+            $instName = trim($row['institute_name']);
+            $institute = Institute::firstOrCreate(
+                ['name_en' => $instName],
+                ['name_bn' => $instName, 'slug' => Str::slug($instName), 'status' => 1]
+            );
             $institute_id = $institute->id;
         }
 
-        // Board Check
+        // 2. Board
         $board_id = null;
         if (!empty($row['board_name'])) {
-            $board = Board::where('name_en', trim($row['board_name']))->first();
-            if (!$board) {
-                throw new Exception("Board '{$row['board_name']}' not found! Please add data in Board table first.");
-            }
+            $boardName = trim($row['board_name']);
+            $board = Board::firstOrCreate(
+                ['name_en' => $boardName],
+                ['name_bn' => $boardName, 'slug' => Str::slug($boardName), 'status' => 1]
+            );
             $board_id = $board->id;
         }
 
-        // Year Check
+        // 3. Academic Year
         $year_id = null;
         if (!empty($row['year_name'])) {
-            $year = AcademicYear::where('name_en', trim($row['year_name']))->first();
-            if (!$year) {
-                throw new Exception("Academic Year '{$row['year_name']}' not found! Please add data in Academic Year table first.");
-            }
+            $yearName = trim($row['year_name']);
+            $year = AcademicYear::firstOrCreate(
+                ['name_en' => $yearName],
+                ['name_bn' => $yearName, 'slug' => Str::slug($yearName), 'status' => 1]
+            );
             $year_id = $year->id;
         }
 
-        // Category Check
+        // 4. Category
         $category_id = null;
         if (!empty($row['category_name'])) {
-            $category = Category::where('name_en', trim($row['category_name']))->first();
-            if (!$category) {
-                throw new Exception("Category '{$row['category_name']}' not found! Please add data in Category table first.");
-            }
+            $catName = trim($row['category_name']);
+            $category = Category::firstOrCreate(
+                ['name_en' => $catName],
+                ['name_bn' => $catName, 'slug' => Str::slug($catName), 'status' => 1]
+            );
             $category_id = $category->id;
         }
 
-        // Class Check (Mandatory handled logic)
+        // 5. Class (Mandatory if provided)
         $class_id = null;
         if (!empty($row['class_name'])) {
-            $class = SchoolClass::where('name_en', trim($row['class_name']))->first();
-            if (!$class) {
-                throw new Exception("Class '{$row['class_name']}' not found! Please add data in Class table first.");
-            }
+            $className = trim($row['class_name']);
+            $class = SchoolClass::firstOrCreate(
+                ['name_en' => $className],
+                ['name_bn' => $className, 'slug' => Str::slug($className), 'status' => 1]
+            );
             $class_id = $class->id;
         }
 
-        // Department Check
+        // 6. Department (Optional but linked to Class)
         $dept_id = null;
-        if (!empty($row['department_name'])) {
-            $dept = ClassDepartment::where('name_en', trim($row['department_name']))->first();
-            if (!$dept) {
-                throw new Exception("Department '{$row['department_name']}' not found! Please add data in Class Department table first.");
-            }
+        if (!empty($row['department_name']) && $class_id) {
+            $deptName = trim($row['department_name']);
+            $dept = ClassDepartment::firstOrCreate(
+                ['name_en' => $deptName],
+                ['name_bn' => $deptName, 'slug' => Str::slug($deptName), 'status' => 1]
+            );
             $dept_id = $dept->id;
+
+            // Link Department to Class (Pivot) if not already linked
+            $dept->classes()->syncWithoutDetaching([$class_id]);
         }
 
-        // Subject Check
+        // 7. Subject (Linked to Class & Dept)
         $subject_id = null;
-        if (!empty($row['subject_name'])) {
-            $subject = Subject::where('name_en', trim($row['subject_name']))->first();
-            if (!$subject) {
-                throw new Exception("Subject '{$row['subject_name']}' not found! Please add data in Subject table first.");
-            }
+        if (!empty($row['subject_name']) && $class_id) {
+            $subName = trim($row['subject_name']);
+            // Subject Check (Name only first, then link)
+            $subject = Subject::firstOrCreate(
+                ['name_en' => $subName],
+                ['name_bn' => $subName, 'slug' => Str::slug($subName), 'status' => 1]
+            );
             $subject_id = $subject->id;
+
+            // Link Subject to Class (Pivot)
+            $subject->classes()->syncWithoutDetaching([$class_id]);
+
+            // Link Subject to Department (Pivot) if department exists
+            if ($dept_id) {
+                $subject->departments()->syncWithoutDetaching([$dept_id]);
+            }
         }
 
-        // Chapter Check
+        // 8. Chapter (Dependent on Subject & Class)
         $chapter_id = null;
-        if (!empty($row['chapter_name'])) {
-            $chapter = Chapter::where('name_en', trim($row['chapter_name']))->first();
-            if (!$chapter) {
-                throw new Exception("Chapter '{$row['chapter_name']}' not found! Please add data in Chapter table first.");
-            }
+        if (!empty($row['chapter_name']) && $subject_id && $class_id) {
+            $chapName = trim($row['chapter_name']);
+            
+            // Chapter must match Name, Subject AND Class
+            $chapter = Chapter::firstOrCreate(
+                [
+                    'name_en' => $chapName,
+                    'subject_id' => $subject_id,
+                    'class_id' => $class_id
+                ],
+                [
+                    'name_bn' => $chapName,
+                    'slug' => Str::slug($chapName . '-' . $class_id), // Ensure unique slug logic
+                    'status' => 1
+                ]
+            );
             $chapter_id = $chapter->id;
         }
 
-        // Topic Check
+        // 9. Topic (Dependent on Chapter)
         $topic_id = null;
-        if (!empty($row['topic_name'])) {
-            $topic = Topic::where('name_en', trim($row['topic_name']))->first();
-            if (!$topic) {
-                throw new Exception("Topic '{$row['topic_name']}' not found! Please add data in Topic table first.");
-            }
+        if (!empty($row['topic_name']) && $chapter_id) {
+            $topicName = trim($row['topic_name']);
+            
+            $topic = Topic::firstOrCreate(
+                [
+                    'name_en' => $topicName,
+                    'chapter_id' => $chapter_id
+                ],
+                [
+                    'name_bn' => $topicName,
+                    'slug' => Str::slug($topicName . '-' . $chapter_id),
+                    'status' => 1
+                ]
+            );
             $topic_id = $topic->id;
         }
 
-        // --- 2. Handle Tags ---
+        // --- B. Prepare Tags ---
         $tags = null;
         if (isset($row['tags']) && !empty($row['tags'])) {
             $tags = array_map('trim', explode(',', $row['tags']));
         }
 
-        // --- 3. Create MCQ ---
+        // --- C. Create MCQ ---
         return new McqQuestion([
             'institute_id'      => $institute_id,
             'board_id'          => $board_id,

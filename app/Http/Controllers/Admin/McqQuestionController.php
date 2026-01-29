@@ -19,6 +19,16 @@ use App\Exports\SampleMcqQuestionExport;
 use App\Imports\McqQuestionImport;
 class McqQuestionController extends Controller
 {
+
+
+public function getInstitutesByType(Request $request)
+    {
+        $institutes = Institute::where('type', $request->type)
+                               ->where('status', 1)
+                               ->orderBy('name_en', 'asc')
+                               ->get();
+        return response()->json($institutes);
+    }
     // --- VIEW PAGES ---
 
     public function create()
@@ -32,20 +42,23 @@ class McqQuestionController extends Controller
         return view('admin.mcq.create', $data);
     }
 
+    // --- EDIT PAGE ---
     public function edit($id)
     {
-        $mcq = McqQuestion::findOrFail($id);
+        $mcq = McqQuestion::with('institute')->findOrFail($id);
         
         $data = [
             'mcq'        => $mcq,
             'categories' => Category::where('status', 1)->get(),
-            'institutes' => Institute::where('status', 1)->get(),
             'boards'     => Board::where('status', 1)->get(),
             'years'      => AcademicYear::where('status', 1)->get(),
             
-            // Edit পেজে ড্রপডাউন প্রি-ফিল করার জন্য ডাটা
-            'classes'     => SchoolClass::where('status', 1)->get(), 
-            // নোট: অন্যান্য ড্রপডাউন (Subject, Chapter etc.) ব্লেড ফাইলে AJAX বা লজিক দিয়ে হ্যান্ডেল হবে
+            // Edit পেজের জন্য বর্তমান টাইপের সব ইনস্টিটিউট লোড করা হচ্ছে
+            'institutes' => $mcq->institute_id 
+                            ? Institute::where('type', $mcq->institute->type)->where('status', 1)->get() 
+                            : [],
+                            
+            'classes'    => SchoolClass::where('status', 1)->get(), 
         ];
         return view('admin.mcq.edit', $data);
     }

@@ -26,16 +26,31 @@
                 {{-- Section 1: Academic Info --}}
                 <div class="row mb-4 p-3 bg-light rounded border">
                     <h6 class="text-primary mb-3"><i class="fa fa-university me-1"></i> Academic Info</h6>
-                    <div class="col-md-4 mb-3">
+                    
+                    {{-- New: Institute Type --}}
+                    <div class="col-md-3 mb-3">
+                        <label>Institute Type</label>
+                        <select id="institute_type" class="form-control select2">
+                            <option value="">Select Type</option>
+                            <option value="school" {{ optional($mcq->institute)->type == 'school' ? 'selected' : '' }}>School</option>
+                            <option value="college" {{ optional($mcq->institute)->type == 'college' ? 'selected' : '' }}>College</option>
+                            <option value="university" {{ optional($mcq->institute)->type == 'university' ? 'selected' : '' }}>University</option>
+                        </select>
+                    </div>
+
+                    {{-- Institute --}}
+                    <div class="col-md-3 mb-3">
                         <label>Institute</label>
-                        <select name="institute_id" class="form-control select2">
+                        <select name="institute_id" id="institute_id" class="form-control select2">
                             <option value="">Select Institute</option>
+                            {{-- Pre-loaded via Controller based on type --}}
                             @foreach($institutes as $i) 
                                 <option value="{{ $i->id }}" {{ $mcq->institute_id == $i->id ? 'selected' : '' }}>{{ $i->name_en }}</option> 
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
+
+                    <div class="col-md-3 mb-3">
                         <label>Board</label>
                         <select name="board_id" class="form-control select2">
                             <option value="">Select Board</option>
@@ -44,7 +59,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label>Academic Year</label>
                         <select name="year_id" class="form-control select2">
                             <option value="">Select Year</option>
@@ -69,7 +84,7 @@
                     <div class="col-md-3 mb-3">
                         <label>Class *</label>
                         <select name="class_id" id="class_id" class="form-control select2" required>
-                            {{-- Class is loaded from Controller --}}
+                            <option value="">Select Class</option>
                             @foreach($classes as $c) 
                                 <option value="{{ $c->id }}" {{ $mcq->class_id == $c->id ? 'selected' : '' }}>{{ $c->name_en }}</option> 
                             @endforeach
@@ -79,28 +94,28 @@
                         <label>Department</label>
                         <select name="class_department_id" id="department_id" class="form-control select2">
                             <option value="">Select Department</option>
-                            {{-- Will be loaded via JS --}}
+                            {{-- Loaded via JS --}}
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label>Subject *</label>
                         <select name="subject_id" id="subject_id" class="form-control select2" required>
                             <option value="">Select Subject</option>
-                            {{-- Will be loaded via JS --}}
+                            {{-- Loaded via JS --}}
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label>Chapter</label>
                         <select name="chapter_id" id="chapter_id" class="form-control select2">
                             <option value="">Select Chapter</option>
-                            {{-- Will be loaded via JS --}}
+                            {{-- Loaded via JS --}}
                         </select>
                     </div>
                     <div class="col-md-8 mb-3">
                         <label>Topic</label>
                         <select name="topic_id" id="topic_id" class="form-control select2">
                             <option value="">Select Topic</option>
-                            {{-- Will be loaded via JS --}}
+                            {{-- Loaded via JS --}}
                         </select>
                     </div>
                 </div>
@@ -127,9 +142,9 @@
                     @endfor
                 </div>
 
-                {{-- Section 4: Metadata --}}
+                {{-- Section 4: Metadata (Upload Type Removed) --}}
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-8 mb-3">
                         <label>Tags</label>
                         <select name="tags[]" class="form-control select2" multiple="multiple">
                             @if($mcq->tags)
@@ -139,14 +154,7 @@
                             @endif
                         </select>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label>Upload Type</label>
-                        <select name="upload_type" class="form-control">
-                            <option value="subject_wise" {{ $mcq->upload_type == 'subject_wise' ? 'selected' : '' }}>Subject Wise</option>
-                            <option value="general" {{ $mcq->upload_type == 'general' ? 'selected' : '' }}>General</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label>Status</label>
                         <select name="status" class="form-control">
                             <option value="1" {{ $mcq->status == 1 ? 'selected' : '' }}>Active</option>
@@ -175,6 +183,7 @@
         $('.summernote').summernote({ height: 150 });
 
         var routes = {
+            institutes: "{{ route('mcq.ajax.institutes') }}",
             classes: "{{ route('mcq.ajax.classes') }}",
             departments: "{{ route('mcq.ajax.departments') }}",
             subjects: "{{ route('mcq.ajax.subjects') }}",
@@ -184,7 +193,6 @@
 
         // Saved IDs for pre-filling
         var saved = {
-            cat: "{{ $mcq->category_id }}",
             cls: "{{ $mcq->class_id }}",
             dept: "{{ $mcq->class_department_id }}",
             sub: "{{ $mcq->subject_id }}",
@@ -192,7 +200,24 @@
             top: "{{ $mcq->topic_id }}"
         };
 
-        // --- Reusable Load Functions ---
+        // --- 1. Institute Type Change Logic ---
+        $('#institute_type').on('change', function(e) {
+            if(!e.originalEvent) return; // Prevent clearing on page load
+            var type = $(this).val();
+            $('#institute_id').html('<option value="">Loading...</option>');
+            
+            if(type) {
+                $.get(routes.institutes, { type: type }, function(res) {
+                    var ops = '<option value="">Select Institute</option>';
+                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
+                    $('#institute_id').html(ops);
+                });
+            } else {
+                $('#institute_id').html('<option value="">Select Institute</option>');
+            }
+        });
+
+        // --- 2. Reusable Load Functions (For Edit Mode) ---
 
         function loadDepartments(clsId, selected = null) {
             $.get(routes.departments, { class_id: clsId }, function(res) {
@@ -208,7 +233,7 @@
                 res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
                 $('#subject_id').html(ops).val(selected).trigger('change.select2'); 
                 
-                // If initializing and subject set, load chapters
+                // If initializing (selected is not null) and chapters dropdown is empty, load chapters
                 if(selected && $('#chapter_id').children('option').length <= 1) {
                     loadChapters(selected, clsId, saved.chap);
                 }
@@ -221,6 +246,7 @@
                 res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
                 $('#chapter_id').html(ops).val(selected).trigger('change.select2');
 
+                // Load Topics if chapter is selected
                 if(selected && $('#topic_id').children('option').length <= 1) {
                     loadTopics(selected, saved.top);
                 }
@@ -235,43 +261,66 @@
             });
         }
 
-        // --- Initialization Logic ---
+        // --- 3. Init Load (Pre-fill Data) ---
         if(saved.cls) {
             loadDepartments(saved.cls, saved.dept);
             loadSubjects(saved.cls, saved.dept, saved.sub);
         }
 
-        // --- Event Listeners (User Interaction) ---
+        // --- 4. Event Listeners (User Interaction) ---
 
-        // 1. Category -> Class
+        // Category -> Class
         $('#category_id').on('change', function(e) {
-            if(!e.originalEvent) return; // Ignore programmatic changes on init
+            if(!e.originalEvent) return;
             var id = $(this).val();
             $('#class_id').html('<option value="">Loading...</option>');
-            $.get(routes.classes, { category_id: id }, function(res) {
-                var ops = '<option value="">Select Class</option>';
-                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                $('#class_id').html(ops);
-            });
+            
+            // Reset downstream
+            $('#department_id').html('<option value="">Select Department</option>');
+            $('#subject_id').html('<option value="">Select Subject</option>');
+            $('#chapter_id').html('<option value="">Select Chapter</option>');
+            $('#topic_id').html('<option value="">Select Topic</option>');
+
+            if(id) {
+                $.get(routes.classes, { category_id: id }, function(res) {
+                    var ops = '<option value="">Select Class</option>';
+                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
+                    $('#class_id').html(ops);
+                });
+            } else {
+                 $('#class_id').html('<option value="">Select Class</option>');
+            }
         });
 
-        // 2. Class -> Dept & Subject
+        // Class -> Department AND Subject
         $('#class_id').on('change', function(e) {
             if(!e.originalEvent) return;
             var clsId = $(this).val();
-            loadDepartments(clsId);
-            loadSubjects(clsId, null);
+            
+            if(clsId) {
+                // Load Departments
+                $('#department_id').html('<option value="">Loading...</option>');
+                $.get(routes.departments, { class_id: clsId }, function(res) {
+                    var ops = '<option value="">Select Department</option>';
+                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
+                    $('#department_id').html(ops);
+                });
+
+                // Load Subjects (Initially based on Class only)
+                loadSubjects(clsId, null);
+            } else {
+                $('#department_id').html('<option value="">Select Department</option>');
+                $('#subject_id').html('<option value="">Select Subject</option>');
+            }
         });
 
-        // 3. Dept -> Subject
+        // Department -> Reload Subject
         $('#department_id').on('change', function(e) {
             if(!e.originalEvent) return;
-            var deptId = $(this).val();
-            var clsId = $('#class_id').val();
-            loadSubjects(clsId, deptId);
+            loadSubjects($('#class_id').val(), $(this).val());
         });
 
-        // 4. Subject -> Chapter
+        // Subject -> Chapter
         $('#subject_id').on('change', function(e) {
             if(!e.originalEvent) return;
             var subId = $(this).val();
@@ -279,11 +328,10 @@
             loadChapters(subId, clsId);
         });
 
-        // 5. Chapter -> Topic
+        // Chapter -> Topic
         $('#chapter_id').on('change', function(e) {
             if(!e.originalEvent) return;
-            var chapId = $(this).val();
-            loadTopics(chapId);
+            loadTopics($(this).val());
         });
     });
 </script>
