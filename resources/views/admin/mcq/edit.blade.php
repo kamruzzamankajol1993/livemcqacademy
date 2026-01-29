@@ -77,7 +77,7 @@
                         <select name="category_id" id="category_id" class="form-control select2" required>
                             <option value="">Select Category</option>
                             @foreach($categories as $cat) 
-                                <option value="{{ $cat->id }}" {{ $mcq->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name_en }}</option> 
+                                <option value="{{ $cat->id }}" {{ $mcq->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->english_name }}</option> 
                             @endforeach
                         </select>
                     </div>

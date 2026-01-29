@@ -65,8 +65,8 @@ class McqQuestionImport implements ToModel, WithHeadingRow
         if (!empty($row['category_name'])) {
             $catName = trim($row['category_name']);
             $category = Category::firstOrCreate(
-                ['name_en' => $catName],
-                ['name_bn' => $catName, 'slug' => Str::slug($catName), 'status' => 1]
+                ['english_name' => $catName],
+                ['bangla_name' => $catName, 'slug' => Str::slug($catName), 'status' => 1]
             );
             $category_id = $category->id;
         }

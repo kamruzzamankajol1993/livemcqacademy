@@ -69,7 +69,7 @@
                         <label>Category *</label>
                         <select name="category_id" id="category_id" class="form-control select2" required>
                             <option value="">Select Category</option>
-                            @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->name_en }}</option> @endforeach
+                            @foreach($categories as $cat) <option value="{{ $cat->id }}">{{ $cat->english_name }}</option> @endforeach
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">

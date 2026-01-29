@@ -4,11 +4,30 @@
 
 @section('css')
 <style>
+    #ajax-loaderOne {
+        position: absolute; /* Changed from fixed to absolute */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8); /* Slightly more opaque */
+        z-index: 50; /* Z-index lowered as it's inside card */
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem; /* Matches Card Border Radius */
+        backdrop-filter: blur(1px);
+    }
     .question-text { max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 @endsection
 
 @section('body')
+<div id="ajax-loaderOne">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -131,6 +150,7 @@
         var currentPage = 1;
 
         function fetchData() {
+            $('#ajax-loaderOne').css('display', 'flex');
             var search = $('#searchInput').val();
             var class_id = $('#filter_class').val();
             var subject_id = $('#filter_subject').val();
@@ -167,6 +187,11 @@
                 } else { rows = '<tr><td colspan="7" class="text-center text-muted">No MCQs found</td></tr>'; }
                 $('#tableBody').html(rows);
                 renderPagination(res);
+                $('#ajax-loaderOne').hide();
+            }).fail(function() {
+                // Hide Loader on Error
+                $('#ajax-loaderOne').hide();
+                alert('Something went wrong! Please try again.');
             });
         }
 

@@ -14,6 +14,7 @@ class McqQuestion extends Model
         'class_id',
         'subject_id',
         'chapter_id',
+        'class_department_id',
         'institute_id', // New
         'board_id',     // New
         'year_id',      // New (Academic Year)
@@ -77,5 +78,11 @@ class McqQuestion extends Model
     public function academicYear()
     {
         return $this->belongsTo(AcademicYear::class, 'year_id');
+    }
+
+    public function department()
+    {
+        // Relationship with ClassDepartment model
+        return $this->belongsTo(ClassDepartment::class, 'class_department_id');
     }
 }
