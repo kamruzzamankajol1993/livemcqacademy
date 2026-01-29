@@ -16,6 +16,7 @@ class Feature extends Model
         'english_name',
         'slug',
         'color',
+        'serial',
         'image',
         'short_description',
         'status',
