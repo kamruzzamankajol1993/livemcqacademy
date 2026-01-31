@@ -22,7 +22,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users',
-            'phone'    => 'nullable|string|max:20',
+            'phone'    => 'nullable|string|max:20|unique:users',
             'password' => 'required|string|min:6|confirmed', // password_confirmation field required
         ]);
 
@@ -46,7 +46,7 @@ class AuthController extends Controller
                 'name'   => $validatedCustomerData['name'],
                 'phone'  => $validatedCustomerData['phone'] ?? null,
                 'email'  => $validatedCustomerData['email'],
-                'status' => 'active', 
+                'status' => 1, 
                 // স্লাগ বা অন্য ফিল্ড লাগলে এখানে এড করতে পারেন
                 'slug'   => \Illuminate\Support\Str::slug($validatedCustomerData['name']) . '-' . time(),
             ]);
@@ -59,12 +59,15 @@ class AuthController extends Controller
                 'password'     => Hash::make($request->password), // Always hash the password
                 'viewpassword' => $request->password,             // Store plain text as requested
                 'customer_id'  => $customer->id,                  // Link to the newly created customer
-                'user_type'    => 2,                              // As specified, user_type will always be 2
-                'type'         => 'customer',                     // Optional: to identify user type easily
+                'user_type'    => 2,                           // Optional: to identify user type easily
                 'status'       => 1,
             ]);
 
             // --- আপনার দেওয়া কোড লজিক শেষ ---
+
+            $customer->update([
+                'user_id' => $user->id
+            ]);
 
             DB::commit();
 
@@ -130,23 +133,51 @@ class AuthController extends Controller
      * Dashboard / Profile API
      */
     public function dashboard(Request $request)
-    {
-        // লগইন করা ইউজার এবং তার কাস্টমার ডিটেইলস নিয়ে আসা
-        $user = $request->user()->load('customer');
-
-        // কাস্টমারের অর্ডার হিস্ট্রি বা পয়েন্ট লগ যদি আনতে চান:
-        // $user = $request->user()->load(['customer.orders', 'customer.rewardPointLogs']);
+{
+    try {
+        // ইউজার এবং তার রিলেটেড ডাটা লোড করা
+        $user = $request->user()->load([
+            'customer', 
+            'activeSubscription.package', 
+            'subscriptions.package', 
+            'payments.package'
+        ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'User dashboard data',
+            'message' => 'User dashboard data retrieved successfully',
             'data' => [
-                'user_info' => $user,
-                'total_orders' => $user->customer ? $user->customer->orders()->count() : 0,
-                'reward_points' => $user->customer ? $user->customer->reward_points : 0,
+                'user_info' => [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'image' => $user->image ? asset($user->image) : null,
+                ],
+                
+                // বর্তমান একটিভ প্যাকেজ
+                'active_subscription' => $user->activeSubscription,
+                
+                // সব প্যাকেজের তালিকা
+                'subscription_history' => $user->subscriptions,
+                
+                // পেমেন্ট হিস্ট্রি
+                'payment_history' => $user->payments,
+                
+                // আপডেট করা স্ট্যাটাস সেকশন
+                'stats' => [
+                    'total_packages_bought' => $user->subscriptions()->count(), // মোট কতটি প্যাকেজ কেনা হয়েছে
+                ]
             ]
         ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Failed to load dashboard: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Logout API
@@ -266,11 +297,11 @@ public function updateProfileRequest(Request $request)
 
     // Validation
     $validator = Validator::make($request->all(), [
-        'name'     => 'nullable|string|max:255',
-        'phone'    => 'nullable|string|max:20',
-        'email'    => 'nullable|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|min:6|confirmed',
-    ]);
+            'name'     => 'nullable|string|max:255',
+            'email'    => 'nullable|email|unique:users,email,' . $user->id,
+            'phone'    => 'nullable|string|max:20|unique:users,phone,' . $user->id, // নিজের আইডি বাদে ইউনিক চেক
+            'password' => 'nullable|min:6|confirmed',
+        ]);
 
     if ($validator->fails()) {
         return response()->json(['status' => false, 'errors' => $validator->errors()], 422);

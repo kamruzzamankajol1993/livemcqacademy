@@ -89,8 +89,30 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
+            // --- নতুন কোড শুরু ---
+$now = \Carbon\Carbon::now('Asia/Dhaka');
+
+// সামারি ডাটা
+$totalCustomers = \App\Models\Customer::count(); 
+$activeSubscriptions = \App\Models\UserSubscription::where('status', 'active')
+                        ->where('end_date', '>', $now)
+                        ->count(); 
+$totalEarnings = \App\Models\Payment::where('status', 'success')->sum('amount'); 
+
+// আগামী ৭ দিনে যাদের মেয়াদ শেষ হবে
+$expiringSoon = \App\Models\UserSubscription::with(['user.customer', 'package'])
+    ->where('status', 'active')
+    ->whereBetween('end_date', [$now, $now->copy()->addDays(7)])
+    ->orderBy('end_date', 'asc')
+    ->get(); 
+// --- নতুন কোড শেষ ---
+
         return view('admin.dashboard.index', compact(
+            'totalCustomers',
+            'activeSubscriptions',
             'totalMcq',
+            'totalEarnings',
+            'expiringSoon',
             'totalSubjects',
             'totalClasses',
             'totalInstitutes',

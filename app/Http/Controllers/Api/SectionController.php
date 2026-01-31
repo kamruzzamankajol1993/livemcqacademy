@@ -15,21 +15,44 @@ class SectionController extends Controller
     public function index()
     {
         try {
-            // category_id সহ ডাটা আনা হচ্ছে
-            $sections = Section::where('status', 1)
+            // ১. রিলেশন লোড করা
+            // Category টেবিলে english_name/bangla_name ফিল্ড থাকে
+            $sections = Section::with([
+                    'category:id,english_name,bangla_name', 
+                    'class:id,name_en,name_bn', 
+                    'subject:id,name_en,name_bn'
+                ])
+                ->where('status', 1)
                 ->select(
-                    'id', 
-                    'name_en', 
-                    'name_bn', 
-                    'slug', 
-                    'category_id', // Added
-                    'class_id', 
-                    'subject_id', 
-                    'serial', 
-                    'status'
+                    'id', 'name_en', 'name_bn', 'slug', 'category_id', 'class_id', 'subject_id', 'serial', 'status'
                 )
                 ->orderBy('serial', 'asc')
                 ->get();
+
+            // ২. ডাটা ট্রান্সফর্ম
+            $sections->transform(function ($item) {
+                // Category Name
+                if ($item->category) {
+                    $item->category_name_en = $item->category->english_name;
+                    $item->category_name_bn = $item->category->bangla_name;
+                } else {
+                    $item->category_name_en = null;
+                    $item->category_name_bn = null;
+                }
+
+                // Class Name
+                $item->class_name_en = $item->class->name_en ?? null;
+                $item->class_name_bn = $item->class->name_bn ?? null;
+
+                // Subject Name
+                $item->subject_name_en = $item->subject->name_en ?? null;
+                $item->subject_name_bn = $item->subject->name_bn ?? null;
+
+                // রিলেশন অবজেক্ট হাইড করা
+                unset($item->category, $item->class, $item->subject);
+
+                return $item;
+            });
 
             return response()->json([
                 'status' => true,
@@ -47,47 +70,56 @@ class SectionController extends Controller
 
     /**
      * ২. ফিল্টার সেকশন (Filter Sections)
-     * এটি category_id, class_id অথবা subject_id দিয়ে ফিল্টার করবে।
-     * * * URL Examples:
-     * - Category Wise: /api/sections/filter?category_id=2
-     * - Class Wise:    /api/sections/filter?class_id=1
-     * - Subject Wise:  /api/sections/filter?subject_id=5
-     * - Combined:      /api/sections/filter?category_id=2&class_id=1
+     * URL: /api/sections/filter?class_id=1
      */
     public function filterSections(Request $request)
     {
         try {
-            $query = Section::where('status', 1);
+            $query = Section::with([
+                    'category:id,english_name,bangla_name', 
+                    'class:id,name_en,name_bn', 
+                    'subject:id,name_en,name_bn'
+                ])
+                ->where('status', 1);
 
-            // ১. ক্যাটাগরি ফিল্টার (NEW)
+            // ফিল্টার লজিক
             if ($request->has('category_id') && !empty($request->category_id)) {
                 $query->where('category_id', $request->category_id);
             }
-
-            // ২. ক্লাস ফিল্টার
             if ($request->has('class_id') && !empty($request->class_id)) {
                 $query->where('class_id', $request->class_id);
             }
-
-            // ৩. সাবজেক্ট ফিল্টার
             if ($request->has('subject_id') && !empty($request->subject_id)) {
                 $query->where('subject_id', $request->subject_id);
             }
 
-            // ডাটা সিলেকশন (category_id সহ)
+            // ডাটা গেট করা
             $sections = $query->select(
-                    'id', 
-                    'name_en', 
-                    'name_bn', 
-                    'slug', 
-                    'category_id', // Added
-                    'class_id', 
-                    'subject_id', 
-                    'serial', 
-                    'status'
+                    'id', 'name_en', 'name_bn', 'slug', 'category_id', 'class_id', 'subject_id', 'serial', 'status'
                 )
                 ->orderBy('serial', 'asc')
                 ->get();
+
+            // ডাটা ট্রান্সফর্ম
+            $sections->transform(function ($item) {
+                if ($item->category) {
+                    $item->category_name_en = $item->category->english_name;
+                    $item->category_name_bn = $item->category->bangla_name;
+                } else {
+                    $item->category_name_en = null;
+                    $item->category_name_bn = null;
+                }
+
+                $item->class_name_en = $item->class->name_en ?? null;
+                $item->class_name_bn = $item->class->name_bn ?? null;
+
+                $item->subject_name_en = $item->subject->name_en ?? null;
+                $item->subject_name_bn = $item->subject->name_bn ?? null;
+
+                unset($item->category, $item->class, $item->subject);
+
+                return $item;
+            });
 
             return response()->json([
                 'status' => true,

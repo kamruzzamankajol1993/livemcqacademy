@@ -37,7 +37,8 @@ use App\Http\Controllers\Admin\AcademicYearController;
 use App\Http\Controllers\Admin\InstituteController;
 use App\Http\Controllers\Admin\ClassDepartmentController;
 use App\Http\Controllers\Admin\McqQuestionController;
-
+use App\Http\Controllers\Admin\FeatureListController;
+use App\Http\Controllers\Admin\PackageController;
 Route::get('/clear', function() {
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
@@ -93,6 +94,18 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::group(['middleware' => ['auth']], function() {
 
+
+Route::post('customer/{id}/assign-package', [CustomerController::class, 'assignPackage'])->name('customer.assignPackage');
+
+
+// --- Package Module ---
+    // AJAX Data Route for Package Table
+    Route::get('ajax_package_data', [PackageController::class, 'data'])->name('ajax.package.data');
+    Route::resource('package', PackageController::class);
+
+
+Route::get('ajax_feature_list', [FeatureListController::class, 'data'])->name('ajax.feature_list.data');
+    Route::resource('feature-list', FeatureListController::class);
 
 
 Route::get('ajax-mcq-institutes', [App\Http\Controllers\Admin\McqQuestionController::class, 'getInstitutesByType'])->name('mcq.ajax.institutes');

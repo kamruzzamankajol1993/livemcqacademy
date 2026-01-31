@@ -15,16 +15,34 @@ use App\Http\Controllers\Api\InstituteController;
 use App\Http\Controllers\Api\AcademicYearController;
 use App\Http\Controllers\Api\BoardController;
 use App\Http\Controllers\Api\McqQuestionController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\PackageController;
+use App\Http\Controllers\Api\SubscriptionController;
+
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
+Route::post('/login/facebook', [SocialAuthController::class, 'loginWithFacebook']);
+Route::post('/login/google', [SocialAuthController::class, 'loginWithGoogle']);
 Route::post('/forgot-password/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/forgot-password/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword']);
 
 // Protected Routes (Login required)
 Route::middleware('auth:sanctum')->group(function () {
+
+
+// সাবস্ক্রিপশন বা প্যাকেজ হিস্ট্রি
+    Route::get('/my-subscriptions', [SubscriptionController::class, 'subscriptionHistory']);
+    
+    // পেমেন্ট হিস্ট্রি
+    Route::get('/my-payments', [SubscriptionController::class, 'paymentHistory']);
+
+Route::get('/payment-methods', [SubscriptionController::class, 'paymentMethods']);
+Route::post('/purchase-package', [SubscriptionController::class, 'purchasePackage']);
+
+Route::get('/packages', [PackageController::class, 'index']);
+Route::get('/packages/{id}', [PackageController::class, 'show']);
 
 // MCQ List with Pagination & Filters
 Route::get('/mcqs', [McqQuestionController::class, 'index']);
@@ -64,7 +82,7 @@ Route::get('/categories', [CategoryController::class, 'index']);
 // উদাহরণ: /api/categories/feature/1
 Route::get('/categories/feature/{id}', [CategoryController::class, 'getCategoriesByFeature']);
 
-Route::get('/features', [FeatureController::class, 'index']);
+Route::get('/all_features', [FeatureController::class, 'index']);
 
 Route::get('/classes', [ClassController::class, 'index']);
 

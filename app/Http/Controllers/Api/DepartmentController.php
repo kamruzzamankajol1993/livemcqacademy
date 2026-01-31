@@ -9,11 +9,13 @@ use App\Models\SchoolClass;
 
 class DepartmentController extends Controller
 {
-    // ১. সকল ডিপার্টমেন্ট লিস্ট (All Department List)
+    // ১. সকল ডিপার্টমেন্ট লিস্ট (সাথে ক্লাসের তথ্য)
     public function index()
     {
         try {
-            $departments = ClassDepartment::where('status', 1)
+            // with('classes') দিয়ে রিলেশন লোড করা হলো
+            $departments = ClassDepartment::with('classes:id,name_en,name_bn')
+                ->where('status', 1)
                 ->select(
                     'id',
                     'name_en',
@@ -27,15 +29,30 @@ class DepartmentController extends Controller
                 ->orderBy('serial', 'asc')
                 ->get();
 
-            // আইকন/ইমেজ URL প্রসেসিং
+            // ডাটা প্রসেসিং
             $departments->transform(function ($dept) {
+                // ১. আইকন/ইমেজ URL প্রসেসিং
                 if (!empty($dept->icon)) {
                     if (!str_contains($dept->icon, 'http')) {
-                        $dept->icon = asset('public/'.$dept->icon);
+                        $dept->icon = asset('public/' . $dept->icon);
                     }
                 } else {
                     $dept->icon = null;
                 }
+
+                // ২. ক্লাসের নামগুলো সুন্দরভাবে ফরম্যাট করা (Optional)
+                // আপনি চাইলে সরাসরি $dept->classes ব্যবহার করতে পারেন, অথবা কাস্টম ফিল্ড বানাতে পারেন
+                $dept->class_list = $dept->classes->map(function ($cls) {
+                    return [
+                        'id' => $cls->id,
+                        'name_en' => $cls->name_en,
+                        'name_bn' => $cls->name_bn,
+                    ];
+                });
+
+                // মেইন classes রিলেশন হাইড করা (রেসপন্স ক্লিন রাখার জন্য)
+                unset($dept->classes);
+
                 return $dept;
             });
 
@@ -68,7 +85,6 @@ class DepartmentController extends Controller
             }
 
             // ওই ক্লাসের সাথে অ্যাসাইন করা ডিপার্টমেন্টগুলো আনা
-            // SchoolClass মডেলে departments() রিলেশনশিপ (belongsToMany) ব্যবহার করা হয়েছে
             $departments = $class->departments()
                 ->where('class_departments.status', 1)
                 ->select(
@@ -84,15 +100,21 @@ class DepartmentController extends Controller
                 ->orderBy('class_departments.serial', 'asc')
                 ->get();
 
-            // আইকন/ইমেজ URL প্রসেসিং
-            $departments->transform(function ($dept) {
+            // ডাটা প্রসেসিং
+            $departments->transform(function ($dept) use ($class) {
+                // ১. আইকন URL প্রসেসিং
                 if (!empty($dept->icon)) {
                     if (!str_contains($dept->icon, 'http')) {
-                        $dept->icon = asset('public/'.$dept->icon);
+                        $dept->icon = asset('public/' . $dept->icon);
                     }
                 } else {
                     $dept->icon = null;
                 }
+
+                // ২. ক্লাস নেম সংযুক্ত করা (যেহেতু আমরা নির্দিষ্ট ক্লাসের সাপেক্ষে ডাটা আনছি)
+                $dept->class_name_en = $class->name_en;
+                $dept->class_name_bn = $class->name_bn;
+
                 return $dept;
             });
 

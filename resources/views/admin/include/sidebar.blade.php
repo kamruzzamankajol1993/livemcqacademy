@@ -75,6 +75,45 @@
             @endforeach
         @endif
 
+        @if ($usr->can('userView')) 
+<li class="nav-item">
+    <a class="nav-link {{ Route::is('customer.*') ? 'active' : '' }}" href="{{ route('customer.index') }}">
+        <i data-feather="users"></i>
+        <span>Customer Management</span>
+    </a>
+</li>
+@endif
+
+        <li class="sidebar-title">
+                    <span>Package And Feature</span>
+        </li>
+
+        {{-- PRICING & PACKAGES --}}
+<li class="nav-item">
+    <a class="nav-link collapsed" href="#packageSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="packageSubmenu">
+        <i data-feather="package"></i>
+        <span>Packages</span>
+        <i data-feather="chevron-down" class="ms-auto"></i>
+    </a>
+    <ul class="collapse list-unstyled {{ Route::is('package.*') || Route::is('feature-list.*') ? 'show' : '' }}" id="packageSubmenu" data-bs-parent="#sidebar-menu">
+        <li>
+            <a class="nav-link {{ Route::is('feature-list.index') ? 'active' : '' }}" href="{{ route('feature-list.index') }}">
+                Feature List
+            </a>
+        </li>
+        <li>
+            <a class="nav-link {{ Route::is('package.index') ? 'active' : '' }}" href="{{ route('package.index') }}">
+                All Packages
+            </a>
+        </li>
+        <li>
+            <a class="nav-link {{ Route::is('package.create') ? 'active' : '' }}" href="{{ route('package.create') }}">
+                Add New Package
+            </a>
+        </li>
+    </ul>
+</li>
+
         {{-- MASTER SETUP DROPDOWN --}}
         @if ($usr->can('featureView') || $usr->can('featureAdd') || 
              $usr->can('categoryView') || $usr->can('categoryAdd') || 

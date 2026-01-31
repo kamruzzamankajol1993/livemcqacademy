@@ -62,6 +62,33 @@ class User extends Authenticatable
 
     public function customer()
 {
-    return $this->belongsTo(Customer::class);
+   return $this->hasOne(Customer::class, 'user_id', 'id');
 }
+
+// ১. পেমেন্ট হিস্ট্রি (সব পেমেন্ট)
+    public function payments()
+    {
+        return $this->hasMany(Payment::class)->orderBy('created_at', 'desc');
+    }
+
+    // ২. সাবস্ক্রিপশন হিস্ট্রি (সব প্যাকেজ যা সে নিয়েছে)
+    public function subscriptions()
+    {
+        return $this->hasMany(UserSubscription::class)->orderBy('created_at', 'desc');
+    }
+
+    // ৩. বর্তমান অ্যাক্টিভ সাবস্ক্রিপশন (যদি থাকে)
+    public function activeSubscription()
+    {
+        return $this->hasOne(UserSubscription::class)
+                    ->where('status', 'active')
+                    ->where('end_date', '>', now())
+                    ->latest();
+    }
+    
+    // ৪. চেক করা ইউজার প্রিমিয়াম কিনা
+    public function isPremium()
+    {
+        return $this->activeSubscription()->exists();
+    }
 }

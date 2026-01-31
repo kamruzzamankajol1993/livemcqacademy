@@ -15,10 +15,15 @@ class SubjectController extends Controller
     public function index()
     {
         try {
-            $subjects = Subject::where('status', 1)
+            // Relation Load (classes & departments)
+            $subjects = Subject::with([
+                    'classes:id,name_en,name_bn', 
+                    'departments:id,name_en,name_bn'
+                ])
+                ->where('status', 1)
                 ->select('id', 'name_en', 'name_bn', 'slug', 'color', 'icon', 'serial', 'status')
                 ->orderBy('serial', 'asc')
-                 ->simplePaginate(20); 
+                ->simplePaginate(20); 
 
             return $this->formatResponse($subjects, 'All subject list retrieved successfully');
 
@@ -29,16 +34,16 @@ class SubjectController extends Controller
 
     /**
      * ২. ফিল্টার সাবজেক্ট (Filter Subjects)
-     * এই একটি মেথড ৩টি কাজ করবে:
-     * - শুধু ক্লাস দিয়ে ফিল্টার (class_id)
-     * - শুধু ডিপার্টমেন্ট দিয়ে ফিল্টার (department_id)
-     * - ক্লাস এবং ডিপার্টমেন্ট উভয় দিয়ে ফিল্টার (class_id & department_id)
-     * * URL: /api/subjects/filter?class_id=1&department_id=2
+     * URL: /api/subjects/filter?class_id=1&department_id=2
      */
     public function filterSubjects(Request $request)
     {
         try {
-            $query = Subject::where('status', 1);
+            $query = Subject::with([
+                    'classes:id,name_en,name_bn', 
+                    'departments:id,name_en,name_bn'
+                ])
+                ->where('status', 1);
 
             // ক্লাস ফিল্টার
             if ($request->has('class_id') && !empty($request->class_id)) {
@@ -54,29 +59,12 @@ class SubjectController extends Controller
                 });
             }
 
-            // ডাটা সিলেকশন ও পেজিনেশন (২০টি করে ডাটা দিবে)
-            // অ্যাপের জন্য simplePaginate() ভালো, কারণ এতে next_page_url থাকে
+            // ডাটা সিলেকশন ও পেজিনেশন
             $subjects = $query->select('id', 'name_en', 'name_bn', 'slug', 'color', 'icon', 'serial', 'status')
                 ->orderBy('serial', 'asc')
                 ->simplePaginate(20); 
 
-            // ইমেজ URL প্রসেসিং (পেজিনেটেড ডাটার ওপর লুপ চালানো)
-            $subjects->getCollection()->transform(function ($item) {
-                if (!empty($item->icon)) {
-                    if (!str_contains($item->icon, 'http')) {
-                        $item->icon = asset('public/'.$item->icon);
-                    }
-                } else {
-                    $item->icon = null;
-                }
-                return $item;
-            });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Subjects retrieved successfully.',
-                'data' => $subjects
-            ], 200);
+            return $this->formatResponse($subjects, 'Subjects retrieved successfully based on filters.');
 
         } catch (\Exception $e) {
             return response()->json([
@@ -87,20 +75,45 @@ class SubjectController extends Controller
     }
 
     /**
-     * Helper Method: রেসপন্স ফরম্যাট এবং ইমেজ URL প্রসেসিং
+     * Helper Method: রেসপন্স ফরম্যাট, ইমেজ URL এবং রিলেশন প্রসেসিং
      */
     private function formatResponse($data, $message)
     {
-        // ইমেজ URL প্রসেসিং
-        $data->transform(function ($item) {
+        // getCollection() ব্যবহার করা হয়েছে কারণ $data একটি Paginator অবজেক্ট
+        $data->getCollection()->transform(function ($item) {
+            
+            // ১. ইমেজ URL প্রসেসিং
             if (!empty($item->icon)) {
-                // যদি ইমেজে http না থাকে (অর্থাৎ লোকাল পাথ), তাহলে asset() দিয়ে ফুল লিংক বানানো
                 if (!str_contains($item->icon, 'http')) {
-                    $item->icon = asset('public/'.$item->icon);
+                    $item->icon = asset('public/' . $item->icon);
                 }
             } else {
                 $item->icon = null;
             }
+
+            // ২. ক্লাস লিস্ট তৈরি (Many-to-Many Relation)
+            // সাবজেক্টটি কোন কোন ক্লাসের সাথে যুক্ত তার লিস্ট
+            $item->class_list = $item->classes->map(function($cls) {
+                return [
+                    'id' => $cls->id,
+                    'name_en' => $cls->name_en,
+                    'name_bn' => $cls->name_bn,
+                ];
+            });
+
+            // ৩. ডিপার্টমেন্ট লিস্ট তৈরি (Many-to-Many Relation)
+            // সাবজেক্টটি কোন কোন ডিপার্টমেন্টের সাথে যুক্ত তার লিস্ট
+            $item->department_list = $item->departments->map(function($dept) {
+                return [
+                    'id' => $dept->id,
+                    'name_en' => $dept->name_en,
+                    'name_bn' => $dept->name_bn,
+                ];
+            });
+
+            // মেইন রিলেশন অবজেক্ট হাইড করা (রেসপন্স ক্লিন রাখার জন্য)
+            unset($item->classes, $item->departments);
+
             return $item;
         });
 

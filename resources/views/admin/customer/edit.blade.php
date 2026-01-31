@@ -1,264 +1,87 @@
 @extends('admin.master.master')
-@section('title', 'Edit Customer')
+@section('title', 'Edit Customer Profile')
+
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
-        <div class="mb-4">
-            <h2>Edit Customer: {{ $customer->name }}</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Edit Customer Login Access</h2>
+            <a href="{{ route('customer.index') }}" class="btn btn-secondary shadow-sm">
+                <i class="fa fa-arrow-left me-1"></i> Back
+            </a>
         </div>
-        <div class="card">
-            <div class="card-body">
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-                <form action="{{ route('customer.update', $customer->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $customer->name) }}" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Mobile</label>
-                            <input type="number" name="phone" class="form-control" value="{{ old('phone', $customer->phone) }}" 
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, ''); if (this.value.length > 11) this.value = this.value.slice(0, 11);" 
-                                   pattern="[0-9]{11}" title="Please enter an 11-digit mobile number" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Secondary Mobile (Optional)</label>
-                            <input type="number" name="secondary_phone" class="form-control" value="{{ old('secondary_phone', $customer->secondary_phone) }}" 
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, ''); if (this.value.length > 11) this.value = this.value.slice(0, 11);" 
-                                   pattern="[0-9]{11}" title="Please enter an 11-digit mobile number">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Type</label>
-                            <select name="type" id="type" class="form-select" required>
-                                <option value="normal" @selected(old('type', $customer->type) == 'normal')>Normal</option>
-                                <option value="silver" @selected(old('type', $customer->type) == 'silver')>Silver</option>
-                                <option value="platinum" @selected(old('type', $customer->type) == 'platinum')>Platinum</option>
-                            </select>
-                        </div>
 
-                        <div class="col-md-6 mb-3">
-    <label class="form-label">Discount (%)</label>
-    <input type="number" id="discount" name="discount_in_percent" class="form-control" value="{{ old('discount_in_percent', $customer->discount_in_percent) }}" step="0.1" min="0" max="100">
-</div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 text-primary">Update Information for {{ $customer->name }}</h5>
                     </div>
+                    <div class="card-body">
+                        @include('flash_message')
 
-                    @if($user)
-                        <hr>
-                        <h5>Login Information</h5>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
-                            </div>
-                        </div>
-                        <p class="text-muted">Leave password fields blank to keep the current password.</p>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">New Password</label>
-                                <div class="input-group">
-                                    <input type="password" name="password" id="password" class="form-control" autocomplete="new-password" 
-       readonly 
-       onfocus="this.removeAttribute('readonly');">
-                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password">
-                                        <i class="fa fa-eye-slash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Confirm New Password</label>
-                                <div class="input-group">
-                                    <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" autocomplete="new-password" 
-       readonly 
-       onfocus="this.removeAttribute('readonly');">
-                                    <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password_confirmation">
-                                        <i class="fa fa-eye-slash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <hr>
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" name="create_login_account" value="1" id="createLoginAccount" @if(old('create_login_account')) checked @endif>
-                            <label class="form-check-label" for="createLoginAccount">Create Login Account for this Customer</label>
-                        </div>
-                        <div id="loginFields" style="display: none;">
-                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}">
-                                </div>
-                            </div>
+                        <form action="{{ route('customer.update', $customer->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Password</label>
-                                    <div class="input-group">
-                                        <input type="password" name="password" id="password" class="form-control" autocomplete="new-password" 
-       readonly 
-       onfocus="this.removeAttribute('readonly');">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password">
-                                            <i class="fa fa-eye-slash"></i>
-                                        </button>
-                                    </div>
-                                        <div id="passwordHelp" class="form-text">Password must be at least 8 characters long.</div>
-                    
+                                    <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" value="{{ old('name', $customer->name) }}" required>
                                 </div>
+
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Confirm Password</label>
-                                    <div class="input-group">
-                                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" autocomplete="new-password" 
-       readonly 
-       onfocus="this.removeAttribute('readonly');">
-                                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#password_confirmation">
-                                            <i class="fa fa-eye-slash"></i>
-                                        </button>
-                                    </div>
+                                    <label class="form-label fw-bold">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="phone" class="form-control" value="{{ old('phone', $customer->phone) }}" required>
+                                </div>
+
+                                <div class="col-md-12 mb-4">
+                                    <label class="form-label fw-bold">Email Address (Login Username) <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" class="form-control" value="{{ old('email', $customer->email) }}" required>
+                                </div>
+
+                                <hr>
+                                <div class="col-md-12">
+                                    <p class="text-warning small mb-3"><i class="fa fa-exclamation-triangle"></i> Leave password fields empty if you don't want to change it.</p>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">New Password</label>
+                                    <input type="password" name="password" class="form-control" placeholder="Enter new password">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Confirm New Password</label>
+                                    <input type="password" name="password_confirmation" class="form-control" placeholder="Repeat new password">
                                 </div>
                             </div>
-                        </div>
-                    @endif
-                    
-                    <hr>
-                    <h5>Addresses <span class="text-danger">*</span></h5>
-                    <div id="address-container">
-                        @forelse($customer->addresses as $index => $address)
-                        <div class="row align-items-center mb-2 address-row">
-                            <div class="col-md-7">
-                                <input type="text" name="addresses[{{$index}}][address]" class="form-control" value="{{ $address->address }}" required>
+
+                            <div class="mt-4 text-end">
+                                <button type="submit" class="btn btn-success px-4 shadow-sm">
+                                    <i class="fa fa-sync me-1"></i> Update Customer & User Data
+                                </button>
                             </div>
-                            <div class="col-md-3">
-                                <select name="addresses[{{$index}}][address_type]" class="form-select">
-                                    <option value="Home" @selected($address->address_type == 'Home')>Home</option>
-                                    <option value="Office" @selected($address->address_type == 'Office')>Office</option>
-                                    <option value="Others" @selected($address->address_type == 'Others')>Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-1 text-center">
-                                <label class="form-check-label" for="default_address_{{$index}}">Default</label>
-                                <input type="radio" name="default_address_index" value="{{$index}}" id="default_address_{{$index}}" class="form-check-input" @checked($address->is_default) required title="Select a default address">
-                            </div>
-                            <div class="col-md-1">
-                                @if(!$loop->first)
-                                <button type="button" class="btn btn-danger btn-sm remove-address-btn">&times;</button>
-                                @endif
-                            </div>
-                        </div>
-                        @empty
-                         <div class="row align-items-center mb-2 address-row">
-                            <div class="col-md-7"><input type="text" name="addresses[0][address]" class="form-control" placeholder="Enter full address" required></div>
-                            <div class="col-md-3">
-                                <select name="addresses[0][address_type]" class="form-select">
-                                    <option value="Home">Home</option><option value="Office">Office</option><option value="Others">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-1 text-center">
-                                <label class="form-check-label" for="default_address_0">Default</label>
-                                <input type="radio" name="default_address_index" value="0" id="default_address_0" class="form-check-input" checked required title="Select a default address">
-                            </div>
-                            <div class="col-md-1"></div>
-                        </div>
-                        @endforelse
+                        </form>
                     </div>
-                    <button type="button" id="add-address-btn" class="btn btn-sm btn-success mt-2"><i class="fa fa-plus me-1"></i>Add Another Address</button>
-                    
-                    <div class="mt-4">
-                        <button type="submit" class="btn btn-primary">Update Customer</button>
+                </div>
+            </div>
+            
+            {{-- বর্তমান স্ট্যাটাস কার্ড --}}
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 bg-light">
+                    <div class="card-body text-center py-4">
+                        <i class="fa fa-user-circle fa-4x text-muted mb-3"></i>
+                        <h5>Current Account Info</h5>
+                        <p class="mb-0"><strong>Joined:</strong> {{ $customer->created_at->format('d M, Y') }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge {{ $customer->status == 1 ? 'bg-success' : 'bg-danger' }}">
+                                {{ $customer->status == 1 ? 'Active' : 'Inactive' }}
+                            </span>
+                        </p>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </main>
-@endsection
-@section('script')
-<script>
-$(document).ready(function() {
-
-// Auto Discount Logic
-    $('#type').on('change', function() {
-        let type = $(this).val();
-        let discountField = $('#discount');
-
-        if(type === 'silver') {
-            discountField.val(5);
-        } else if(type === 'platinum') {
-            discountField.val(10);
-        } else {
-            discountField.val(0);
-        }
-    });
-    $('#createLoginAccount').on('change', function() {
-        const loginFields = $('#loginFields');
-        const isChecked = $(this).is(':checked');
-        loginFields.toggle(isChecked);
-        loginFields.find('input[name="email"], input[name="password"]').prop('required', isChecked);
-    }).trigger('change');
-
-    let addressIndex = {{ $customer->addresses->count() > 0 ? $customer->addresses->count() : 1 }};
-    $('#add-address-btn').on('click', function() {
-        const addressHtml = `
-            <div class="row align-items-center mb-2 address-row">
-                <div class="col-md-7"><input type="text" name="addresses[${addressIndex}][address]" class="form-control" placeholder="Enter full address" required></div>
-                <div class="col-md-3">
-                    <select name="addresses[${addressIndex}][address_type]" class="form-select">
-                        <option value="Home">Home</option><option value="Office">Office</option><option value="Others">Other</option>
-                    </select>
-                </div>
-                <div class="col-md-1 text-center">
-                    <label class="form-check-label" for="default_address_${addressIndex}">Default</label>
-                    <input type="radio" name="default_address_index" value="${addressIndex}" id="default_address_${addressIndex}" class="form-check-input" required title="Select a default address">
-                </div>
-                <div class="col-md-1"><button type="button" class="btn btn-danger btn-sm remove-address-btn">&times;</button></div>
-            </div>`;
-        $('#address-container').append(addressHtml);
-        addressIndex++;
-    });
-
-    $('#address-container').on('click', '.remove-address-btn', function() {
-        $(this).closest('.address-row').remove();
-    });
-
-    function validatePasswords() {
-        const password = $('#password');
-        const confirmPassword = $('#password_confirmation');
-        if (confirmPassword.val().length > 0 || password.val().length > 0) {
-            if (password.val() === confirmPassword.val()) {
-                password.removeClass('is-invalid').addClass('is-valid');
-                confirmPassword.removeClass('is-invalid').addClass('is-valid');
-            } else {
-                password.removeClass('is-valid').addClass('is-invalid');
-                confirmPassword.removeClass('is-valid').addClass('is-invalid');
-            }
-        } else {
-            password.removeClass('is-valid is-invalid');
-            confirmPassword.removeClass('is-valid is-invalid');
-        }
-    }
-
-    $('#password, #password_confirmation').on('keyup', validatePasswords);
-    
-    // Show/Hide Password functionality
-    $('form').on('click', '.toggle-password', function() {
-        const target = $($(this).data('target'));
-        const icon = $(this).find('i');
-        if (target.attr('type') === 'password') {
-            target.attr('type', 'text');
-            icon.removeClass('fa-eye-slash').addClass('fa-eye');
-        } else {
-            target.attr('type', 'password');
-            icon.removeClass('fa-eye').addClass('fa-eye-slash');
-        }
-    });
-});
-</script>
 @endsection

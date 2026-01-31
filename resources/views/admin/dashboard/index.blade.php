@@ -112,19 +112,81 @@
                     </div>
                 </div>
                 {{-- Placeholder for future metrics --}}
-                <div class="col-md-6 col-xl-9">
-                    <div class="card h-100 shadow-sm border-0 summary-card bg-light">
-                        <div class="card-body d-flex align-items-center justify-content-center text-muted">
-                            <span><i data-feather="bar-chart" class="me-2"></i> More analytics coming soon...</span>
-                        </div>
-                    </div>
+                <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 bg-white p-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary text-white rounded p-3 me-3"><i class="fa fa-users"></i></div>
+                <div>
+                    <h6 class="text-muted mb-0">Total Customers</h6>
+                    <h3 class="mb-0">{{ $totalCustomers }}</h3>
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 bg-white p-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-success text-white rounded p-3 me-3"><i class="fa fa-shopping-cart"></i></div>
+                <div>
+                    <h6 class="text-muted mb-0">Active Subscriptions</h6>
+                    <h3 class="mb-0">{{ $activeSubscriptions }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card shadow-sm border-0 bg-white p-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-info text-white rounded p-3 me-3"><i class="fa fa-money-bill"></i></div>
+                <div>
+                    <h6 class="text-muted mb-0">Total Earnings</h6>
+                    <h3 class="mb-0">৳{{ number_format($totalEarnings, 2) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
             </div>
 
             {{-- Row 3: Charts --}}
             <div class="row g-4 mb-4">
                 {{-- Upload History Chart --}}
                 <div class="col-lg-7">
+
+                    <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="mb-0 text-danger fw-bold"><i class="fa fa-exclamation-circle me-2"></i>Expiring Soon (Within 7 Days)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-3">Customer</th>
+                        <th>Package</th>
+                        <th>Expire Date</th>
+                        <th class="text-end pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($expiringSoon as $sub)
+                    <tr>
+                        <td class="ps-3">{{ $sub->user->name }}<br><small class="text-muted">{{ $sub->user->phone }}</small></td>
+                        <td><span class="badge bg-soft-primary text-primary">{{ $sub->package->name }}</span></td>
+                        <td>{{ $sub->end_date->format('d M, Y') }}</td>
+                        <td class="text-end pe-3">
+                            @if($sub->user->customer)
+                            <a href="{{ route('customer.show', $sub->user->customer->id) }}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="text-center py-4">No data found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
                     <div class="card h-100">
                         <div class="card-header card-header-custom">
                             Questions Upload Trend
