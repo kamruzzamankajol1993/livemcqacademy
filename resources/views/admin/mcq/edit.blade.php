@@ -6,7 +6,12 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .select2-container .select2-selection--single { height: 38px; line-height: 38px; }
-    .note-editor.note-frame { border: 1px solid #ced4da; }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #4e73df; border: none; color: white; padding: 2px 8px;
+    }
+    .image-preview-wrapper { position: relative; display: inline-block; margin-top: 10px; }
+    .image-preview { width: 150px; height: auto; border: 2px solid #eaecf4; border-radius: 8px; box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15); }
+    .badge-type { position: absolute; top: -10px; right: -10px; }
 </style>
 @endsection
 
@@ -14,66 +19,30 @@
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Edit MCQ</h2>
-            <a href="{{ route('mcq.index') }}" class="btn btn-secondary"><i class="fa fa-arrow-left me-1"></i> Back to List</a>
+            <div>
+                <h2 class="mb-0">Edit MCQ</h2>
+                <small class="text-muted">Update question details for ID: #{{ $mcq->id }}</small>
+            </div>
+            <a href="{{ route('mcq.index') }}" class="btn btn-secondary shadow-sm"><i class="fa fa-arrow-left me-1"></i> Back to List</a>
         </div>
 
-        <form action="{{ route('mcq.update', $mcq->id) }}" method="POST" class="card">
-            @csrf @method('PUT')
+        <form action="{{ route('mcq.update', $mcq->id) }}" method="POST" enctype="multipart/form-data" class="card shadow border-0">
+            @csrf
+            @method('PUT')
             <div class="card-body">
                 @include('flash_message')
 
-                {{-- Section 1: Academic Info --}}
-                <div class="row mb-4 p-3 bg-light rounded border">
-                    <h6 class="text-primary mb-3"><i class="fa fa-university me-1"></i> Academic Info</h6>
-                    
-                    {{-- New: Institute Type --}}
-                    <div class="col-md-3 mb-3">
-                        <label>Institute Type</label>
-                        <select id="institute_type" class="form-control select2">
-                            <option value="">Select Type</option>
-                            <option value="school" {{ optional($mcq->institute)->type == 'school' ? 'selected' : '' }}>School</option>
-                            <option value="college" {{ optional($mcq->institute)->type == 'college' ? 'selected' : '' }}>College</option>
-                            <option value="university" {{ optional($mcq->institute)->type == 'university' ? 'selected' : '' }}>University</option>
+                {{-- Section 1: Classification & Type --}}
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold">MCQ Content Type <span class="text-danger">*</span></label>
+                        <select name="mcq_type" id="mcq_type" class="form-control border-primary" required>
+                            <option value="text" {{ $mcq->mcq_type == 'text' ? 'selected' : '' }}>Text Based</option>
+                            <option value="image" {{ $mcq->mcq_type == 'image' ? 'selected' : '' }}>Image Based</option>
                         </select>
                     </div>
-
-                    {{-- Institute --}}
-                    <div class="col-md-3 mb-3">
-                        <label>Institute</label>
-                        <select name="institute_id" id="institute_id" class="form-control select2">
-                            <option value="">Select Institute</option>
-                            {{-- Pre-loaded via Controller based on type --}}
-                            @foreach($institutes as $i) 
-                                <option value="{{ $i->id }}" {{ $mcq->institute_id == $i->id ? 'selected' : '' }}>{{ $i->name_en }}</option> 
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <label>Board</label>
-                        <select name="board_id" class="form-control select2">
-                            <option value="">Select Board</option>
-                            @foreach($boards as $b) 
-                                <option value="{{ $b->id }}" {{ $mcq->board_id == $b->id ? 'selected' : '' }}>{{ $b->name_en }}</option> 
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label>Academic Year</label>
-                        <select name="year_id" class="form-control select2">
-                            <option value="">Select Year</option>
-                            @foreach($years as $y) 
-                                <option value="{{ $y->id }}" {{ $mcq->year_id == $y->id ? 'selected' : '' }}>{{ $y->name_en }}</option> 
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                {{-- Section 2: Question Hierarchy --}}
-                <div class="row mb-3">
-                    <div class="col-md-3 mb-3">
-                        <label>Category *</label>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold">Category <span class="text-danger">*</span></label>
                         <select name="category_id" id="category_id" class="form-control select2" required>
                             <option value="">Select Category</option>
                             @foreach($categories as $cat) 
@@ -81,72 +50,137 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 mb-3">
-                        <label>Class *</label>
+                    <div class="col-md-4 mb-3">
+                        <label class="fw-bold">Class <span class="text-danger">*</span></label>
                         <select name="class_id" id="class_id" class="form-control select2" required>
                             <option value="">Select Class</option>
-                            @foreach($classes as $c) 
-                                <option value="{{ $c->id }}" {{ $mcq->class_id == $c->id ? 'selected' : '' }}>{{ $c->name_en }}</option> 
+                            @foreach($classes as $cls)
+                                <option value="{{ $cls->id }}" {{ $mcq->class_id == $cls->id ? 'selected' : '' }}>{{ $cls->name_en }}</option>
                             @endforeach
                         </select>
                     </div>
+                </div>
+
+                <div class="row mb-4">
                     <div class="col-md-3 mb-3">
                         <label>Department</label>
                         <select name="class_department_id" id="department_id" class="form-control select2">
                             <option value="">Select Department</option>
-                            {{-- Loaded via JS --}}
+                            {{-- JS will load this --}}
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
-                        <label>Subject *</label>
-                        <select name="subject_id" id="subject_id" class="form-control select2" required>
-                            <option value="">Select Subject</option>
-                            {{-- Loaded via JS --}}
+                        <label>Section</label>
+                        <select name="section_id" id="section_id" class="form-control select2">
+                            <option value="">Select Section</option>
+                            @foreach($sections as $sec) 
+                                <option value="{{ $sec->id }}" {{ $mcq->section_id == $sec->id ? 'selected' : '' }}>{{ $sec->name_en }}</option> 
+                            @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-3 mb-3">
+                        <label>Subject <span class="text-danger">*</span></label>
+                        <select name="subject_id" id="subject_id" class="form-control select2" required>
+                            <option value="">Select Subject</option>
+                            {{-- JS will load this --}}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
                         <label>Chapter</label>
                         <select name="chapter_id" id="chapter_id" class="form-control select2">
                             <option value="">Select Chapter</option>
-                            {{-- Loaded via JS --}}
+                            {{-- JS will load this --}}
                         </select>
                     </div>
-                    <div class="col-md-8 mb-3">
-                        <label>Topic</label>
-                        <select name="topic_id" id="topic_id" class="form-control select2">
-                            <option value="">Select Topic</option>
-                            {{-- Loaded via JS --}}
+                </div>
+
+                {{-- Section 2: Administrative Info (Multi-Linked) --}}
+                <div class="row mb-4 p-3 bg-light rounded border">
+                    <h6 class="text-primary mb-3"><i class="fa fa-university me-1"></i> Linked Institutions & Boards</h6>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Institutes (Multiple)</label>
+                        <select name="institute_ids[]" id="institute_ids" class="form-control select2" multiple="multiple">
+                            @foreach($institutes as $ins) 
+                                <option value="{{ $ins->id }}" {{ in_array($ins->id, (array)$mcq->institute_ids) ? 'selected' : '' }}>{{ $ins->name_en }}</option> 
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold">Boards (Multiple)</label>
+                        <select name="board_ids[]" id="board_ids" class="form-control select2" multiple="multiple">
+                            @foreach($boards as $brd) 
+                                <option value="{{ $brd->id }}" {{ in_array($brd->id, (array)$mcq->board_ids) ? 'selected' : '' }}>{{ $brd->name_en }}</option> 
+                            @endforeach
                         </select>
                     </div>
                 </div>
 
                 <hr>
 
-                {{-- Section 3: Question --}}
-                <div class="mb-3">
-                    <label class="fw-bold">Question *</label>
-                    <textarea name="question" class="form-control summernote" required>{{ $mcq->question }}</textarea>
+                {{-- Section 3: Question & Options (Dynamic Toggle) --}}
+                
+                {{-- --- TEXT BASED FIELDS --- --}}
+                <div id="text_fields" style="{{ $mcq->mcq_type == 'text' ? '' : 'display: none;' }}">
+                    <div class="mb-3">
+                        <label class="fw-bold">Question Statement (Text)</label>
+                        <textarea name="question" class="form-control summernote">{{ $mcq->question }}</textarea>
+                    </div>
+                    <div class="row">
+                        @for($i=1; $i<=4; $i++)
+                        @php $opt = 'option_'.$i; @endphp
+                        <div class="col-md-6 mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white">
+                                    <input class="form-check-input" type="radio" name="answer" value="{{ $i }}" {{ $mcq->answer == $i ? 'checked' : '' }}>
+                                </span>
+                                <input type="text" name="{{ $opt }}" class="form-control" value="{{ $mcq->$opt }}" placeholder="Option {{ $i }} Text">
+                            </div>
+                        </div>
+                        @endfor
+                    </div>
                 </div>
 
-                <div class="row">
-                    @for($i=1; $i<=4; $i++)
-                    @php $opt = 'option_'.$i; @endphp
-                    <div class="col-md-6 mb-3">
-                        <div class="input-group">
-                            <div class="input-group-text bg-white">
-                                <input class="form-check-input mt-0" type="radio" name="answer" value="{{ $i }}" {{ $mcq->answer == $i ? 'checked' : '' }} required>
-                            </div>
-                            <input type="text" name="{{ $opt }}" class="form-control" value="{{ $mcq->$opt }}" required>
+                {{-- --- IMAGE BASED FIELDS --- --}}
+                <div id="image_fields" style="{{ $mcq->mcq_type == 'image' ? '' : 'display: none;' }}">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="fw-bold">Question Image</label>
+                            @if($mcq->question_img)
+                                <div class="mb-2">
+                                    <img src="{{ asset($mcq->question_img) }}" class="image-preview border-danger" style="display:block;">
+                                    <small class="text-danger">Current Image</small>
+                                </div>
+                            @endif
+                            <input type="file" name="question_img" class="form-control img-input" accept="image/*">
                         </div>
                     </div>
-                    @endfor
+                    <div class="row">
+                        @for($i=1; $i<=4; $i++)
+                        @php $optImg = 'option_'.$i.'_img'; @endphp
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 border rounded bg-white">
+                                <label class="d-block fw-bold">Option {{ $i }} Image 
+                                    <input type="radio" name="answer_img_trigger" value="{{ $i }}" {{ $mcq->answer == $i ? 'checked' : '' }} class="float-end">
+                                </label>
+                                @if($mcq->$optImg)
+                                    <div class="mb-2">
+                                        <img src="{{ asset($mcq->$optImg) }}" class="image-preview" style="display:block;">
+                                    </div>
+                                @endif
+                                <input type="file" name="{{ $optImg }}" class="form-control img-input" accept="image/*">
+                            </div>
+                        </div>
+                        @endfor
+                    </div>
                 </div>
 
-                {{-- Section 4: Metadata (Upload Type Removed) --}}
+                <hr>
+
+                {{-- Section 4: Metadata --}}
                 <div class="row">
                     <div class="col-md-8 mb-3">
                         <label>Tags</label>
-                        <select name="tags[]" class="form-control select2" multiple="multiple">
+                        <select name="tags[]" class="form-control select2-tags" multiple="multiple">
                             @if($mcq->tags)
                                 @foreach($mcq->tags as $tag)
                                     <option value="{{ $tag }}" selected>{{ $tag }}</option>
@@ -162,13 +196,13 @@
                         </select>
                     </div>
                     <div class="col-md-12 mb-3">
-                        <label>Short Description</label>
+                        <label>Explanation / Short Description</label>
                         <textarea name="short_description" class="form-control" rows="3">{{ $mcq->short_description }}</textarea>
                     </div>
                 </div>
             </div>
             <div class="card-footer text-end">
-                <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i> Update MCQ</button>
+                <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm"><i class="fa fa-save me-1"></i> Update MCQ</button>
             </div>
         </form>
     </div>
@@ -179,16 +213,15 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('.select2').select2({ tags: true, tokenSeparators: [',', ' '] });
+        $('.select2').select2({ width: '100%' });
+        $('.select2-tags').select2({ tags: true, tokenSeparators: [','] });
         $('.summernote').summernote({ height: 150 });
 
         var routes = {
-            institutes: "{{ route('mcq.ajax.institutes') }}",
             classes: "{{ route('mcq.ajax.classes') }}",
             departments: "{{ route('mcq.ajax.departments') }}",
             subjects: "{{ route('mcq.ajax.subjects') }}",
-            chapters: "{{ route('mcq.ajax.chapters') }}",
-            topics: "{{ route('mcq.ajax.topics') }}",
+            chapters: "{{ route('mcq.ajax.chapters') }}"
         };
 
         // Saved IDs for pre-filling
@@ -196,142 +229,75 @@
             cls: "{{ $mcq->class_id }}",
             dept: "{{ $mcq->class_department_id }}",
             sub: "{{ $mcq->subject_id }}",
-            chap: "{{ $mcq->chapter_id }}",
-            top: "{{ $mcq->topic_id }}"
+            chap: "{{ $mcq->chapter_id }}"
         };
 
-        // --- 1. Institute Type Change Logic ---
-        $('#institute_type').on('change', function(e) {
-            if(!e.originalEvent) return; // Prevent clearing on page load
-            var type = $(this).val();
-            $('#institute_id').html('<option value="">Loading...</option>');
-            
-            if(type) {
-                $.get(routes.institutes, { type: type }, function(res) {
-                    var ops = '<option value="">Select Institute</option>';
-                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                    $('#institute_id').html(ops);
-                });
+        // --- Toggle MCQ Type ---
+        $('#mcq_type').on('change', function() {
+            if($(this).val() === 'image') {
+                $('#image_fields').fadeIn();
+                $('#text_fields').hide();
             } else {
-                $('#institute_id').html('<option value="">Select Institute</option>');
+                $('#image_fields').hide();
+                $('#text_fields').fadeIn();
             }
         });
 
-        // --- 2. Reusable Load Functions (For Edit Mode) ---
+        // --- Dependent Dropdowns (Initialization & Events) ---
 
         function loadDepartments(clsId, selected = null) {
             $.get(routes.departments, { class_id: clsId }, function(res) {
                 var ops = '<option value="">Select Department</option>';
-                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                $('#department_id').html(ops).val(selected).trigger('change.select2'); 
+                res.forEach(el => ops += `<option value="${el.id}" ${el.id == selected ? 'selected' : ''}>${el.name_en}</option>`);
+                $('#department_id').html(ops);
             });
         }
 
         function loadSubjects(clsId, deptId, selected = null) {
             $.get(routes.subjects, { class_id: clsId, department_id: deptId }, function(res) {
                 var ops = '<option value="">Select Subject</option>';
-                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                $('#subject_id').html(ops).val(selected).trigger('change.select2'); 
-                
-                // If initializing (selected is not null) and chapters dropdown is empty, load chapters
-                if(selected && $('#chapter_id').children('option').length <= 1) {
-                    loadChapters(selected, clsId, saved.chap);
-                }
+                res.forEach(el => ops += `<option value="${el.id}" ${el.id == selected ? 'selected' : ''}>${el.name_en}</option>`);
+                $('#subject_id').html(ops);
+                if(selected) loadChapters(selected, clsId, saved.chap);
             });
         }
 
         function loadChapters(subId, clsId, selected = null) {
             $.get(routes.chapters, { subject_id: subId, class_id: clsId }, function(res) {
                 var ops = '<option value="">Select Chapter</option>';
-                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                $('#chapter_id').html(ops).val(selected).trigger('change.select2');
-
-                // Load Topics if chapter is selected
-                if(selected && $('#topic_id').children('option').length <= 1) {
-                    loadTopics(selected, saved.top);
-                }
+                res.forEach(el => ops += `<option value="${el.id}" ${el.id == selected ? 'selected' : ''}>${el.name_en}</option>`);
+                $('#chapter_id').html(ops);
             });
         }
 
-        function loadTopics(chapId, selected = null) {
-            $.get(routes.topics, { chapter_id: chapId }, function(res) {
-                var ops = '<option value="">Select Topic</option>';
-                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                $('#topic_id').html(ops).val(selected).trigger('change.select2');
-            });
-        }
-
-        // --- 3. Init Load (Pre-fill Data) ---
+        // Init
         if(saved.cls) {
             loadDepartments(saved.cls, saved.dept);
             loadSubjects(saved.cls, saved.dept, saved.sub);
         }
 
-        // --- 4. Event Listeners (User Interaction) ---
-
-        // Category -> Class
-        $('#category_id').on('change', function(e) {
-            if(!e.originalEvent) return;
+        // Change Events
+        $('#category_id').on('change', function() {
             var id = $(this).val();
-            $('#class_id').html('<option value="">Loading...</option>');
-            
-            // Reset downstream
-            $('#department_id').html('<option value="">Select Department</option>');
-            $('#subject_id').html('<option value="">Select Subject</option>');
-            $('#chapter_id').html('<option value="">Select Chapter</option>');
-            $('#topic_id').html('<option value="">Select Topic</option>');
-
-            if(id) {
-                $.get(routes.classes, { category_id: id }, function(res) {
-                    var ops = '<option value="">Select Class</option>';
-                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                    $('#class_id').html(ops);
-                });
-            } else {
-                 $('#class_id').html('<option value="">Select Class</option>');
-            }
+            $.get(routes.classes, { category_id: id }, function(res) {
+                var ops = '<option value="">Select Class</option>';
+                res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
+                $('#class_id').html(ops);
+            });
         });
 
-        // Class -> Department AND Subject
-        $('#class_id').on('change', function(e) {
-            if(!e.originalEvent) return;
+        $('#class_id').on('change', function() {
             var clsId = $(this).val();
-            
-            if(clsId) {
-                // Load Departments
-                $('#department_id').html('<option value="">Loading...</option>');
-                $.get(routes.departments, { class_id: clsId }, function(res) {
-                    var ops = '<option value="">Select Department</option>';
-                    res.forEach(el => ops += `<option value="${el.id}">${el.name_en}</option>`);
-                    $('#department_id').html(ops);
-                });
-
-                // Load Subjects (Initially based on Class only)
-                loadSubjects(clsId, null);
-            } else {
-                $('#department_id').html('<option value="">Select Department</option>');
-                $('#subject_id').html('<option value="">Select Subject</option>');
-            }
+            loadDepartments(clsId);
+            loadSubjects(clsId, null);
         });
 
-        // Department -> Reload Subject
-        $('#department_id').on('change', function(e) {
-            if(!e.originalEvent) return;
+        $('#department_id').on('change', function() {
             loadSubjects($('#class_id').val(), $(this).val());
         });
 
-        // Subject -> Chapter
-        $('#subject_id').on('change', function(e) {
-            if(!e.originalEvent) return;
-            var subId = $(this).val();
-            var clsId = $('#class_id').val();
-            loadChapters(subId, clsId);
-        });
-
-        // Chapter -> Topic
-        $('#chapter_id').on('change', function(e) {
-            if(!e.originalEvent) return;
-            loadTopics($(this).val());
+        $('#subject_id').on('change', function() {
+            loadChapters($(this).val(), $('#class_id').val());
         });
     });
 </script>

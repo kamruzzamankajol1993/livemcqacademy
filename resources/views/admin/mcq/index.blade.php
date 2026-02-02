@@ -93,46 +93,55 @@
 </main>
 
 {{-- Import Modal --}}
-{{-- Import Modal --}}
-<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form action="{{ route('mcq.import') }}" method="POST" enctype="multipart/form-data" class="modal-content">
-            @csrf
-            <div class="modal-header">
-                <h5 class="modal-title">Import MCQs</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="importModalLabel"><i class="fa fa-file-excel me-2"></i> Bulk Import MCQ Questions</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                {{-- Download Sample Button --}}
-                <div class="text-center mb-4">
-                    <p class="text-muted mb-2">Please download the sample file to understand the format.</p>
-                    <a href="{{ route('mcq.sample') }}" class="btn btn-info text-white">
-                        <i class="fa fa-download me-1"></i> Download Sample Excel
-                    </a>
-                </div>
+            <form action="{{ route('mcq.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    
+                    <div class="alert alert-info border-0 shadow-sm mb-4">
+                        <h6 class="fw-bold"><i class="fa fa-info-circle me-1"></i> ইম্পোর্ট করার জন্য প্রয়োজনীয় নির্দেশাবলী:</h6>
+                        <ul class="small mb-0 mt-2">
+                            <li>অবশ্যই আমাদের সরবরাহ করা <strong>Sample Excel</strong> ফাইলটি ব্যবহার করুন।</li>
+                            <li><strong>mcq_type:</strong> কলামে শুধুমাত্র <code>text</code> অথবা <code>image</code> লিখুন।</li>
+                            <li><strong>answer:</strong> কলামে সঠিক উত্তরের অপশন নম্বর লিখুন (যেমন: 1, 2, 3, বা 4)।</li>
+                            <li><strong>Institutes & Boards:</strong> মাল্টিপল ডাটা দিতে চাইলে কমা (,) ব্যবহার করুন। উদাহরণ: <code>Dhaka Board, Comilla Board</code>।</li>
+                            <li>ক্যাটাগরি, ক্লাস এবং সাবজেক্টের নাম অবশ্যই আপনার ডাটাবেসের নামের সাথে মিল থাকতে হবে।</li>
+                            <li>এক্সেল শিটের নির্ধারিত কলামে ইমেজ থাকলে তা অটোমেটিক আপলোড হয়ে যাবে।</li>
+                        </ul>
+                    </div>
 
-                {{-- File Upload Input --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Upload Excel File</label>
-                    <input type="file" name="file" class="form-control" required accept=".xlsx,.xls,.csv">
-                </div>
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <label class="fw-bold mb-2">Select Excel File (.xlsx, .csv)</label>
+                            <input type="file" name="file" class="form-control" required accept=".xlsx, .xls, .csv">
+                            <p class="text-muted mt-1 small">Maximum file size: 5MB</p>
+                        </div>
+                        <div class="col-md-5 text-center border-start">
+                            <label class="d-block fw-bold mb-2">Download Template</label>
+                            <a href="{{ route('mcq.sample') }}" class="btn btn-outline-success">
+                                <i class="fa fa-download me-1"></i> Download Sample Excel
+                            </a>
+                        </div>
+                    </div>
 
-                {{-- Important Instructions --}}
-                <div class="alert alert-warning border-warning">
-                    <strong class="text-dark"><i class="fa fa-exclamation-triangle me-1"></i> Important Instructions:</strong>
-                    <ul class="mb-0 mt-2 small text-dark ps-3">
-                        <li>Do <strong>not</strong> use IDs. Use exact <strong>Names</strong> (e.g., 'Dhaka College', 'Class 10').</li>
-                        <li>Ensure that <strong>Institute, Board, Year, Class, Subject, etc.</strong> already exist in the system.</li>
-                        <li>If any name (e.g., 'Physics') is not found in the database, the import will <strong>fail</strong> with an error.</li>
-                        <li>Required Columns: <code>question</code>, <code>class_name</code>, <code>subject_name</code>, <code>answer</code>, etc.</li>
-                    </ul>
+                    <div id="importErrors" class="mt-3" style="display:none;">
+                        <div class="alert alert-danger py-2 small"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-success"><i class="fa fa-upload me-1"></i> Upload & Import</button>
-            </div>
-        </form>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fa fa-upload me-1"></i> Start Import
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

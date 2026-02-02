@@ -13,57 +13,49 @@ class SampleMcqQuestionExport implements FromArray, WithHeadings, ShouldAutoSize
     public function headings(): array
     {
         return [
-            'institute_name',   // Optional
-            'board_name',       // Optional
-            'year_name',        // Optional (Academic Year)
-            'category_name',    // Optional
-            'class_name',       // Mandatory
-            'department_name',  // Optional
-            'subject_name',     // Mandatory
-            'chapter_name',     // Optional
-            'topic_name',       // Optional
-            'question',         // Mandatory
-            'option_1',         // Mandatory
-            'option_2',         // Mandatory
-            'option_3',         // Mandatory
-            'option_4',         // Mandatory
-            'answer',           // Mandatory (1, 2, 3, or 4)
-            'tags',             // Optional (Comma separated)
-            'short_description',// Optional
-            'upload_type',      // Optional (Default: subject_wise)
-            'status'            // Optional (Default: 1)
+            'category_name',    // ১
+            'class_name',       // ২
+            'section_name',     // ৩
+            'department_name',  // ৪
+            'subject_name',     // ৫
+            'chapter_name',     // ৬
+            'topic_name',       // ৭
+            'mcq_type',         // ৮ (text / image)
+            'question',         // ৯ (টেক্সট অথবা ইমেজ ড্রপ করবেন)
+            'option_1',         // ১০ (টেক্সট অথবা ইমেজ ড্রপ করবেন)
+            'option_2',         // ১১ (টেক্সট অথবা ইমেজ ড্রপ করবেন)
+            'option_3',         // ১২ (টেক্সট অথবা ইমেজ ড্রপ করবেন)
+            'option_4',         // ১৩ (টেক্সট অথবা ইমেজ ড্রপ করবেন)
+            'answer',           // ১৪ (১, ২, ৩, ৪)
+            'tags',             // ১৫
+            'short_description',// ১৬
+            'upload_type',      // ১৭
+            'status',           // ১৮
+            'institute_names',  // ১৯ (Comma separated)
+            'board_names'       // ২০ (Comma separated)
         ];
     }
 
     public function array(): array
     {
-        // স্যাম্পল ডাটা (ইউজারকে বোঝানোর জন্য)
         return [
             [
-                'Dhaka College',       // institute_name
-                'Dhaka Board',         // board_name
-                '2025-2026',           // year_name
-                'Academic',            // category_name
-                'Class 10',            // class_name (Must exist in DB)
-                'Science',             // department_name
-                'Physics',             // subject_name (Must exist in DB)
-                'Motion',              // chapter_name
-                'Velocity',            // topic_name
-                'What is the unit of velocity?', // question
-                'm/s',                 // option_1
-                'm/s^2',               // option_2
-                'kg',                  // option_3
-                'N',                   // option_4
-                1,                     // answer (Correct Option Number: 1)
-                'physics, motion, science', // tags
-                'Velocity is the rate of change of displacement.', // short_description
-                'subject_wise',        // upload_type
-                1                      // status
+                // Row 1: Text Type MCQ
+                'মাধ্যমিক স্তর', 'Class 10', 'গদ্য/কবিতা', 'Science', 'Physics', 'Force', 'Newton Law', 
+                'text', 'What is F?', 'ma', 'mv', 'mg', 'mh', 1, 
+                'physics', 'Force equals mass times acceleration', 'subject_wise', 1, 
+                'Dhaka College', 'Dhaka Board'
+            ],
+            [
+                // Row 2: Image Type MCQ (Text columns will be empty, just drop images in excel)
+                'উচ্চ-মাধ্যমিক স্তর', 'HSC', '', 'General', 'Math', 'Geometry', 'Circle', 
+                'image', '', '', '', '', '', 2, 
+                'geometry', 'See image for solution', 'subject_wise', 1, 
+                'BUET', 'All Board'
             ]
         ];
     }
 
-    // হেডার স্টাইল (অপশনাল - সুন্দর দেখানোর জন্য)
     public function styles(Worksheet $sheet)
     {
         return [

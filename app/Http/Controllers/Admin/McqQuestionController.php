@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SampleMcqQuestionExport;
 use App\Imports\McqQuestionImport;
+use App\Models\Section;
 class McqQuestionController extends Controller
 {
 
@@ -31,37 +32,9 @@ public function getInstitutesByType(Request $request)
     }
     // --- VIEW PAGES ---
 
-    public function create()
-    {
-        $data = [
-            'categories' => Category::where('status', 1)->get(),
-            'institutes' => Institute::where('status', 1)->get(),
-            'boards'     => Board::where('status', 1)->get(),
-            'years'      => AcademicYear::where('status', 1)->get(),
-        ];
-        return view('admin.mcq.create', $data);
-    }
+   
 
-    // --- EDIT PAGE ---
-    public function edit($id)
-    {
-        $mcq = McqQuestion::with('institute')->findOrFail($id);
-        
-        $data = [
-            'mcq'        => $mcq,
-            'categories' => Category::where('status', 1)->get(),
-            'boards'     => Board::where('status', 1)->get(),
-            'years'      => AcademicYear::where('status', 1)->get(),
-            
-            // Edit পেজের জন্য বর্তমান টাইপের সব ইনস্টিটিউট লোড করা হচ্ছে
-            'institutes' => $mcq->institute_id 
-                            ? Institute::where('type', $mcq->institute->type)->where('status', 1)->get() 
-                            : [],
-                            
-            'classes'    => SchoolClass::where('status', 1)->get(), 
-        ];
-        return view('admin.mcq.edit', $data);
-    }
+   
 
     // --- AJAX METHODS FOR DEPENDENCY ---
 
@@ -127,34 +100,95 @@ public function getInstitutesByType(Request $request)
         return response()->json($topics);
     }
 
-    // --- STORE & UPDATE ---
+    
+    public function create()
+    {
+        $data = [
+            'categories' => Category::where('status', 1)->get(),
+            'institutes' => Institute::where('status', 1)->get(),
+            'boards'     => Board::where('status', 1)->get(),
+            'sections'   => Section::where('status', 1)->get(),
+        ];
+        return view('admin.mcq.create', $data);
+    }
 
+    /**
+     * নতুন MCQ ডাটাবেসে সেভ করা
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'question' => 'required',
-            'option_1' => 'required',
-            'answer'   => 'required',
-            'class_id' => 'required',
+            'mcq_type'   => 'required',
+            'answer'     => 'required',
+            'class_id'   => 'required',
             'subject_id' => 'required',
         ]);
 
-        McqQuestion::create($request->all() + ['status' => $request->status ?? 1]);
+        $data = $request->all();
+
+        // ইমেজ হ্যান্ডেলিং (যদি টাইপ ইমেজ হয়)
+        if ($request->mcq_type == 'image') {
+            foreach (['question', 'option_1', 'option_2', 'option_3', 'option_4'] as $field) {
+                if ($request->hasFile($field . '_img')) {
+                    $file = $request->file($field . '_img');
+                    $name = 'mcq_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/mcq'), $name);
+                    $data[$field . '_img'] = 'uploads/mcq/' . $name;
+                    $data[$field] = null; // ইমেজ মুডে টেক্সট নাল থাকবে
+                }
+            }
+        }
+
+        $data['status'] = $request->status ?? 1;
+        McqQuestion::create($data);
 
         return redirect()->route('mcq.index')->with('success', 'MCQ Created Successfully');
     }
 
+    /**
+     * MCQ এডিট করার পেজ প্রদর্শন
+     */
+    public function edit($id)
+    {
+        $mcq = McqQuestion::findOrFail($id);
+        $data = [
+            'mcq'        => $mcq,
+            'categories' => Category::where('status', 1)->get(),
+            'institutes' => Institute::where('status', 1)->get(),
+            'boards'     => Board::where('status', 1)->get(),
+            'sections'   => Section::where('status', 1)->get(),
+            'classes'    => SchoolClass::where('status', 1)->get(),
+        ];
+        return view('admin.mcq.edit', $data);
+    }
+
+    /**
+     * বিদ্যমান MCQ আপডেট করা
+     */
     public function update(Request $request, $id)
     {
         $mcq = McqQuestion::findOrFail($id);
-        $request->validate([
-            'question' => 'required',
-            'class_id' => 'required',
-            'subject_id' => 'required',
-        ]);
+        $data = $request->all();
 
-        $mcq->update($request->all());
+        // ইমেজ আপডেট লজিক
+        if ($request->mcq_type == 'image') {
+            foreach (['question', 'option_1', 'option_2', 'option_3', 'option_4'] as $field) {
+                if ($request->hasFile($field . '_img')) {
+                    // পুরাতন ফাইল ডিলিট করা (যদি থাকে)
+                    if ($mcq->{$field . '_img'} && File::exists(public_path($mcq->{$field . '_img'}))) {
+                        File::delete(public_path($mcq->{$field . '_img'}));
+                    }
+                    
+                    $file = $request->file($field . '_img');
+                    $name = 'mcq_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/mcq'), $name);
+                    $data[$field . '_img'] = 'uploads/mcq/' . $name;
+                    $data[$field] = null;
+                }
+            }
+        }
 
+        $mcq->update($data);
         return redirect()->route('mcq.index')->with('success', 'MCQ Updated Successfully');
     }
 
@@ -222,13 +256,29 @@ public function getInstitutesByType(Request $request)
 
     // --- IMPORT ---
     public function import(Request $request)
-    {
-        $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
-        try {
-            Excel::import(new McqQuestionImport, $request->file('file'));
-            return redirect()->back()->with('success', 'MCQs imported successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
-        }
+{
+    // ফাইল ভ্যালিডেশন
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,csv'
+    ]);
+
+    try {
+        $file = $request->file('file');
+
+        // ১. PhpSpreadsheet ব্যবহার করে ড্রয়িং (ইমেজ) কালেকশন বের করা
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($file->getRealPath());
+        $spreadsheetObj = $reader->load($file->getRealPath());
+        $drawings = $spreadsheetObj->getActiveSheet()->getDrawingCollection();
+
+        // ২. ড্রয়িং অবজেক্টসহ ইম্পোর্ট ক্লাসটি রান করা
+        // নোট: আপনার ইম্পোর্ট ক্লাসটি (McqQuestionImport) ড্রয়িং হ্যান্ডেল করার জন্য প্রস্তুত থাকতে হবে
+        \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\McqQuestionImport($drawings), $file);
+
+        return redirect()->back()->with('success', 'MCQs with images and multiple categories imported successfully!');
+
+    } catch (\Exception $e) {
+        // কোনো এরর হলে সেটি দেখানো
+        return redirect()->back()->with('error', 'Error during import: ' . $e->getMessage());
     }
+}
 }
