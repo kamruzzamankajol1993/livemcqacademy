@@ -1,13 +1,13 @@
 @extends('admin.master.master')
-@section('title') Customer Management @endsection
+@section('title') Student Management @endsection
 
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Customer Management</h2>
-            <a href="{{ route('customer.create') }}" class="btn btn-primary text-white">
-                <i class="fa fa-plus me-1"></i> Add New Customer
+            <h2 class="mb-0">Student Management</h2>
+            <a href="{{ route('student.create') }}" class="btn btn-primary text-white">
+                <i class="fa fa-plus me-1"></i> Add New Student
             </a>
         </div>
 
@@ -62,7 +62,7 @@
             $('#tableLoader').show();
             let search = $('#searchInput').val();
 
-            $.get("{{ route('ajax.customer.data') }}", { page: currentPage, search: search }, function(res) {
+            $.get("{{ route('ajax.student.data') }}", { page: currentPage, search: search }, function(res) {
                 let rows = '';
                 if(res.data.length > 0) {
                     res.data.forEach((item, i) => {
@@ -74,9 +74,9 @@
                                       ? `<span class="badge bg-info text-dark">${item.user.active_subscription.package.name}</span>` 
                                       : '<span class="text-muted small">No Plan</span>';
 
-                        let showUrl = "{{ route('customer.show', ':id') }}".replace(':id', item.id);
-                        let editUrl = "{{ route('customer.edit', ':id') }}".replace(':id', item.id);
-                        let deleteUrl = "{{ route('customer.destroy', ':id') }}".replace(':id', item.id);
+                        let showUrl = "{{ route('student.show', ':id') }}".replace(':id', item.id);
+                        let editUrl = "{{ route('student.edit', ':id') }}".replace(':id', item.id);
+                        let deleteUrl = "{{ route('student.destroy', ':id') }}".replace(':id', item.id);
 
                         rows += `<tr>
                             <td>${sl}</td>
@@ -136,7 +136,7 @@
     function deleteConfirm(id) {
         Swal.fire({
             title: 'Are you sure?',
-            text: "This will remove the customer profile!",
+            text: "This will remove the Student profile!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',

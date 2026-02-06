@@ -7,7 +7,10 @@ use App\Models\McqQuestion;
 use App\Models\Subject;
 use App\Models\SchoolClass;
 use App\Models\Institute;
-use App\Models\User;
+use App\Models\Book; // নতুন যুক্ত হয়েছে
+use App\Models\Customer;
+use App\Models\UserSubscription;
+use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -18,16 +21,24 @@ class HomeController extends Controller
         $this->middleware('auth');
     }
 
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $filter = $request->get('filter', 'this_month');
-        $now = Carbon::now();
+        // এশিয়া/ঢাকা টাইমজোন সেট করা
+        $now = Carbon::now('Asia/Dhaka');
 
-        // --- 1. Summary Counts ---
+        // --- 1. Summary Counts & Metrics ---
         $totalMcq = McqQuestion::count();
         $totalSubjects = Subject::count();
         $totalClasses = SchoolClass::count();
         $totalInstitutes = Institute::count();
+        $totalBooks = Book::count(); // বুক মডিউলের ডাটা
+        
+        $totalCustomers = Customer::count();
+        $activeSubscriptions = UserSubscription::where('status', 'active')
+                                ->where('end_date', '>', $now)
+                                ->count();
+        $totalEarnings = Payment::where('status', 'success')->sum('amount');
 
         // --- 2. Filter Logic for "New Questions" Card ---
         $newQuestionsQuery = McqQuestion::query();
@@ -40,7 +51,8 @@ class HomeController extends Controller
                 break;
             case 'this_month':
             default:
-                $newQuestionsQuery->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+                $newQuestionsQuery->whereMonth('created_at', $now->month)
+                                  ->whereYear('created_at', $now->year);
                 break;
         }
         $newQuestionsCount = $newQuestionsQuery->count();
@@ -51,7 +63,7 @@ class HomeController extends Controller
             DB::raw("YEAR(created_at) as year"),
             DB::raw("MONTH(created_at) as month_num"),
             DB::raw("COUNT(*) as total")
-        )->where('created_at', '>=', Carbon::now()->subMonths(5)->startOfMonth())
+        )->where('created_at', '>=', $now->copy()->subMonths(5)->startOfMonth())
         ->groupBy('year', 'month_num', 'month')
         ->orderBy('year', 'ASC')
         ->orderBy('month_num', 'ASC')
@@ -75,37 +87,31 @@ class HomeController extends Controller
             $subjectChartData[] = [$row->name_en, (int)$row->total];
         }
 
-        // --- 5. Recent MCQs Table ---
+        // --- 5. Upcoming Expiring Subscriptions (Next 7 Days) ---
+        $expiringSoon = UserSubscription::with(['user.customer', 'package'])
+            ->where('status', 'active')
+            ->whereBetween('end_date', [$now, $now->copy()->addDays(7)])
+            ->orderBy('end_date', 'asc')
+            ->get();
+
+        // --- 6. Recent Data Tables ---
         $recentMcqs = McqQuestion::with(['class', 'subject'])
                         ->latest()
                         ->take(6)
                         ->get();
 
-        // --- 6. Top Classes (Most Questions) ---
+        $recentBooks = Book::with(['category', 'subject'])
+                        ->latest()
+                        ->take(6)
+                        ->get(); // নতুন বুক ডাটা
+
+        // --- 7. Top Classes (Most Questions) ---
         $topClasses = McqQuestion::join('school_classes', 'mcq_questions.class_id', '=', 'school_classes.id')
             ->select('school_classes.name_en', DB::raw('count(*) as total'))
             ->groupBy('school_classes.name_en')
             ->orderBy('total', 'DESC')
             ->take(6)
             ->get();
-
-            // --- নতুন কোড শুরু ---
-$now = \Carbon\Carbon::now('Asia/Dhaka');
-
-// সামারি ডাটা
-$totalCustomers = \App\Models\Customer::count(); 
-$activeSubscriptions = \App\Models\UserSubscription::where('status', 'active')
-                        ->where('end_date', '>', $now)
-                        ->count(); 
-$totalEarnings = \App\Models\Payment::where('status', 'success')->sum('amount'); 
-
-// আগামী ৭ দিনে যাদের মেয়াদ শেষ হবে
-$expiringSoon = \App\Models\UserSubscription::with(['user.customer', 'package'])
-    ->where('status', 'active')
-    ->whereBetween('end_date', [$now, $now->copy()->addDays(7)])
-    ->orderBy('end_date', 'asc')
-    ->get(); 
-// --- নতুন কোড শেষ ---
 
         return view('admin.dashboard.index', compact(
             'totalCustomers',
@@ -116,10 +122,12 @@ $expiringSoon = \App\Models\UserSubscription::with(['user.customer', 'package'])
             'totalSubjects',
             'totalClasses',
             'totalInstitutes',
+            'totalBooks',
             'newQuestionsCount',
             'mcqChartData',
             'subjectChartData',
             'recentMcqs',
+            'recentBooks',
             'topClasses',
             'filter'
         ));

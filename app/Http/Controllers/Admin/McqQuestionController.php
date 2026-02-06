@@ -22,6 +22,112 @@ class McqQuestionController extends Controller
 {
 
 
+// Board Question Index Page
+public function boardQuestionIndex()
+{
+    $classes = SchoolClass::where('status', 1)->get(); //
+    $boards = Board::where('status', 1)->get(); //
+    $subjects = Subject::where('status', 1)->get(); // শুরুতে সব সাবজেক্ট দেখানোর জন্য
+    
+    return view('admin.mcq.board_index', compact('classes', 'boards', 'subjects')); //
+}
+
+// AJAX Data for Board Questions
+/**
+ * Board Question List-এর জন্য AJAX ডাটা রিটার্ন করে
+ * * @param \Illuminate\Http\Request $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function boardQuestionData(Request $request)
+{
+    // ১. কুয়েরি শুরু করা এবং রিলেশনগুলো লোড করা
+    // শুধুমাত্র সেই প্রশ্নগুলো আনবে যেগুলোতে board_ids ফিল্ডে ডাটা আছে
+    $query = McqQuestion::with(['class', 'subject', 'chapter'])
+                ->whereNotNull('board_ids')
+                ->where('board_ids', '!=', '[]')
+                ->where('board_ids', '!=', 'null');
+
+    // ২. বোর্ড ফিল্টার (JSON Column ফিল্টারিং)
+    if ($request->filled('board_id')) {
+        $query->whereJsonContains('board_ids', $request->board_id);
+    }
+
+    // ৩. ক্লাস ফিল্টার
+    if ($request->filled('class_id')) {
+        $query->where('class_id', $request->class_id);
+    }
+
+    // ৪. সাবজেক্ট ফিল্টার
+    if ($request->filled('subject_id')) {
+        $query->where('subject_id', $request->subject_id);
+    }
+
+    // ৫. সার্চ ফিল্টার (প্রশ্নের টেক্সট অনুযায়ী)
+    if ($request->filled('search')) {
+        $query->where('question', 'like', '%' . $request->search . '%');
+    }
+
+    // ৬. সর্টিং এবং প্যাগিনেশন
+    $data = $query->orderBy('id', 'desc')->paginate(10);
+
+    // ৭. JSON রেসপন্স রিটার্ন
+    return response()->json([
+        'data'         => $data->items(),
+        'total'        => $data->total(),
+        'current_page' => $data->currentPage(),
+        'last_page'    => $data->lastPage(),
+        'per_page'     => $data->perPage(),
+        'from'         => $data->firstItem(),
+        'to'           => $data->lastItem(),
+    ]);
+}
+
+public function instituteQuestionIndex()
+{
+    $classes = SchoolClass::where('status', 1)->get();
+    $institutes = Institute::where('status', 1)->orderBy('name_en', 'asc')->get();
+    $subjects = Subject::where('status', 1)->get();
+    
+    return view('admin.mcq.institute_index', compact('classes', 'institutes', 'subjects'));
+}
+
+public function instituteQuestionData(Request $request)
+{
+    $query = McqQuestion::with(['class', 'subject', 'chapter'])
+                ->whereNotNull('institute_ids')
+                ->where('institute_ids', '!=', '[]');
+
+    // Institute Filter (JSON Column)
+    if ($request->filled('institute_id')) {
+        $query->whereJsonContains('institute_ids', $request->institute_id);
+    }
+
+    if ($request->filled('class_id')) {
+        $query->where('class_id', $request->class_id);
+    }
+
+    if ($request->filled('subject_id')) {
+        $query->where('subject_id', $request->subject_id);
+    }
+
+    if ($request->filled('search')) {
+        $query->where('question', 'like', '%' . $request->search . '%');
+    }
+
+    $data = $query->orderBy('id', 'desc')->paginate(10);
+
+    return response()->json([
+        'data' => $data->items(),
+        'total' => $data->total(),
+        'current_page' => $data->currentPage(),
+        'last_page' => $data->lastPage(),
+        'per_page' => $data->perPage(),
+        'from' => $data->firstItem(),
+        'to' => $data->lastItem(),
+    ]);
+}
+
+
 public function getInstitutesByType(Request $request)
     {
         $institutes = Institute::where('type', $request->type)
@@ -236,10 +342,12 @@ public function getInstitutesByType(Request $request)
 
     // --- SHOW PAGE ---
     public function show($id)
-    {
-        $mcq = McqQuestion::with(['category', 'class', 'subject', 'chapter', 'topic', 'institute', 'board', 'academicYear'])->findOrFail($id);
-        return view('admin.mcq.show', compact('mcq'));
-    }
+{
+    // institute এবং board লোড করা যাবে না কারণ এগুলো সরাসরি relationship নয়
+    $mcq = McqQuestion::with(['category', 'class', 'subject', 'chapter', 'topic', 'department', 'section'])->findOrFail($id);
+    
+    return view('admin.mcq.show', compact('mcq'));
+}
 
     // --- DELETE ---
     public function destroy($id)

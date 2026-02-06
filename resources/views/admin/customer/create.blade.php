@@ -1,19 +1,19 @@
 @extends('admin.master.master')
-@section('title', 'Create Customer')
+@section('title', 'Create Student')
 
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Create New Customer</h2>
-            <a href="{{ route('customer.index') }}" class="btn btn-secondary">Back to List</a>
+            <h2>Create New Student</h2>
+            <a href="{{ route('student.index') }}" class="btn btn-secondary">Back to List</a>
         </div>
 
         <div class="card shadow-sm">
             <div class="card-body">
                 @include('flash_message')
 
-                <form action="{{ route('customer.store') }}" method="POST">
+                <form action="{{ route('student.store') }}" method="POST">
                     @csrf
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary px-5">Create Customer & User Account</button>
+                        <button type="submit" class="btn btn-primary px-5">Create Student & User Account</button>
                     </div>
                 </form>
             </div>

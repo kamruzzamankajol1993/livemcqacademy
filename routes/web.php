@@ -19,6 +19,8 @@ use App\Http\Controllers\Admin\ExtraPageController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\AboutUsController;
 use App\Http\Controllers\Admin\ContactController;
+use App\Http\Controllers\Admin\BookCategoryController;
+use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Front\TextController;
 use App\Http\Controllers\Front\AuthController;
 use App\Http\Controllers\Front\CustomerPersonalController;
@@ -39,6 +41,9 @@ use App\Http\Controllers\Admin\ClassDepartmentController;
 use App\Http\Controllers\Admin\McqQuestionController;
 use App\Http\Controllers\Admin\FeatureListController;
 use App\Http\Controllers\Admin\PackageController;
+use App\Http\Controllers\Admin\ExamCategoryController;
+use App\Http\Controllers\Admin\ExamController;
+use App\Http\Controllers\Admin\ExamPackageController;
 Route::get('/clear', function() {
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
     \Illuminate\Support\Facades\Artisan::call('config:clear');
@@ -55,13 +60,7 @@ Auth::routes();
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
-Route::resource('customerPersonalTicket', CustomerPersonalController::class);
 
-Route::controller(CustomerPersonalController::class)->group(function () {
-    Route::get('/customerGeneralTicketPdf/{id}', 'customerGeneralTicketPdf')->name('customerGeneralTicketPdf');
-Route::get('/customerPersonalTicketPdf/{id}', 'customerPersonalTicketPdf')->name('customerPersonalTicketPdf');
-    Route::get('/customerPersonalTicket', 'customerPersonalTicket')->name('customerPersonalTicket');
-});
 Route::controller(LoginController::class)->group(function () {
 
     Route::get('/', 'viewLoginPage')->name('viewLoginPage');
@@ -95,8 +94,42 @@ Route::controller(AuthController::class)->group(function () {
 Route::group(['middleware' => ['auth']], function() {
 
 
-Route::post('customer/{id}/assign-package', [CustomerController::class, 'assignPackage'])->name('customer.assignPackage');
+Route::resource('book', BookController::class);
 
+    // ২. AJAX Data Fetch Route (ইনডেক্স টেবিলের ডাটা প্যাগিনেশন ও সার্চের জন্য)
+    Route::get('get-books-data', [BookController::class, 'fetchData'])->name('book.fetch');
+
+
+Route::get('get-subjects-by-class', [BookController::class, 'getSubjectsByClass'])->name('book.getSubjects');
+
+// ১. Book Category Resource Route (index, store, update, destroy মেথড এর জন্য)
+    Route::resource('book-category', BookCategoryController::class);
+
+    // ২. AJAX Data Fetch Route (টেবিল প্যাগিনেশন এবং সার্চের জন্য)
+    Route::get('get-book-category-data', [BookCategoryController::class, 'fetchData'])->name('book-category.fetch');
+
+    // ৩. Drag & Drop Reorder Route (সিরিয়াল আপডেট করার জন্য)
+    Route::post('book-category-reorder', [BookCategoryController::class, 'reorder'])->name('book-category.reorder');
+
+// Exam Package Resource Route
+    Route::resource('exam-package', ExamPackageController::class);
+
+    // AJAX Dependency Routes
+    Route::get('exam-package/get-departments/{class_id}', [ExamPackageController::class, 'getDepartments'])->name('exam-package.get-departments');
+    Route::get('exam-package/fetch/subjects', [ExamPackageController::class, 'getSubjects'])->name('exam-package.get-subjects');
+    Route::get('exam-package/fetch/chapters', [ExamPackageController::class, 'getChapters'])->name('exam-package.get-chapters');
+    Route::get('exam-package/fetch/topics', [ExamPackageController::class, 'getTopics'])->name('exam-package.get-topics');
+// ড্র্যাগ অ্যান্ড ড্রপ সিরিয়াল আপডেটের জন্য কাস্টম রাউট (এটি রিসোর্স রাউটের উপরে রাখা ভালো)
+    Route::post('exam-category-reorder', [ExamCategoryController::class, 'reorder'])->name('exam.category.serial');
+    
+    // এক্সাম ক্যাটাগরির জন্য স্ট্যান্ডার্ড রিসোর্স রাউট (Index, Store, Edit, Update, Destroy)
+    Route::resource('exam-category', ExamCategoryController::class);
+Route::resource('exam-setup', ExamController::class);
+
+Route::post('student/{id}/assign-package', [CustomerController::class, 'assignPackage'])->name('student.assignPackage');
+// Institute Question Routes
+    Route::get('institute-questions', [McqQuestionController::class, 'instituteQuestionIndex'])->name('institute.questions.index');
+    Route::get('ajax-institute-questions-list', [McqQuestionController::class, 'instituteQuestionData'])->name('institute.questions.ajax.data');
 
 // --- Package Module ---
     // AJAX Data Route for Package Table
@@ -109,7 +142,9 @@ Route::get('ajax_feature_list', [FeatureListController::class, 'data'])->name('a
 
 
 Route::get('ajax-mcq-institutes', [App\Http\Controllers\Admin\McqQuestionController::class, 'getInstitutesByType'])->name('mcq.ajax.institutes');
-
+// Board Question Routes
+    Route::get('board-questions', [McqQuestionController::class, 'boardQuestionIndex'])->name('board.questions.index');
+    Route::get('ajax-board-questions-list', [McqQuestionController::class, 'boardQuestionData'])->name('board.questions.ajax.data');
 Route::resource('mcq', McqQuestionController::class);
 // MCQ AJAX Data Route
 Route::get('ajax-mcq-list', [App\Http\Controllers\Admin\McqQuestionController::class, 'data'])->name('mcq.ajax.data');
@@ -250,8 +285,8 @@ Route::resource('defaultLocation', DefaultLocationController::class);
     Route::resource('systemInformation', SystemInformationController::class);
 
 
-    Route::get('ajax-customers', [CustomerController::class, 'data'])->name('ajax.customer.data');
-    Route::resource('customer', CustomerController::class);
+    Route::get('ajax-students', [CustomerController::class, 'data'])->name('ajax.student.data');
+    Route::resource('student', CustomerController::class);
 
  
 
@@ -267,12 +302,12 @@ Route::resource('defaultLocation', DefaultLocationController::class);
 
 
     Route::controller(CustomerController::class)->group(function () {
-Route::get('/customers/export','exportCustomers')->name('customer.export');
-        Route::get('/customers/check-email','checkEmailUniqueness')->name('customers.checkEmail');
+Route::get('/students/export','exportstudents')->name('student.export');
+        Route::get('/students/check-email','checkEmailUniqueness')->name('students.checkEmail');
 
-    Route::get('/downloadcustomerPdf','downloadcustomerPdf')->name('downloadcustomerPdf');
-    Route::get('/downloadcustomerExcel','downloadcustomerExcel')->name('downloadcustomerExcel');
-    Route::get('/ajax-table-customer/data','data')->name('ajax.customertable.data');
+    Route::get('/downloadstudentPdf','downloadstudentPdf')->name('downloadstudentPdf');
+    Route::get('/downloadstudentExcel','downloadstudentExcel')->name('downloadstudentExcel');
+    Route::get('/ajax-table-student/data','data')->name('ajax.studenttable.data');
 
 
     });

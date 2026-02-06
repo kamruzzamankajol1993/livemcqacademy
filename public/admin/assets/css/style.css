@@ -11,7 +11,78 @@
     --text-color: #334155;          
     --sidebar-width: 240px;
 }
+/* --- Custom Utility Classes based on Root Colors --- */
 
+/* Primary Background override */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+/* Accent Background override (Success/Active states) */
+.bg-accent {
+    background-color: var(--accent-color) !important;
+    color: #ffffff !important;
+}
+
+/* Custom Primary Button */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+    padding: 0.5rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(30, 41, 57, 0.1);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #161e2a !important; /* Slightly darker than primary */
+    border-color: #161e2a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(30, 41, 57, 0.15);
+}
+
+/* Custom Info Button (Using your accent color or blueish slate) */
+.btn-info {
+    background-color: #3b82f6 !important; /* A professional blue for info */
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+.btn-info:hover {
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+/* Badge Styles */
+.badge.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--accent-color) !important;
+}
+
+/* Border color utility */
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+/* Text color utility */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-accent {
+    color: var(--accent-color) !important;
+}
+
+/* Form focus border */
+.form-control:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(0, 201, 81, 0.1);
+}
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--light-gray);

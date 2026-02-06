@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
     $globalFeatures = \App\Models\Feature::where('status', 1)
+    ->whereNotIn('id',[2,3])
                     ->whereNull('parent_id') // সাব-ফিচার বাদ দিয়ে মেইন ফিচার আনার জন্য
                     ->orderBy('id', 'asc') // বা serial কলাম থাকলে serial দিয়ে অর্ডার করতে পারেন
                     ->get();

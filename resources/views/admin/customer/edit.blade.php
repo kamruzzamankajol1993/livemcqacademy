@@ -1,12 +1,12 @@
 @extends('admin.master.master')
-@section('title', 'Edit Customer Profile')
+@section('title', 'Edit Student Profile')
 
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Edit Customer Login Access</h2>
-            <a href="{{ route('customer.index') }}" class="btn btn-secondary shadow-sm">
+            <h2 class="mb-0">Edit Student Login Access</h2>
+            <a href="{{ route('student.index') }}" class="btn btn-secondary shadow-sm">
                 <i class="fa fa-arrow-left me-1"></i> Back
             </a>
         </div>
@@ -20,7 +20,7 @@
                     <div class="card-body">
                         @include('flash_message')
 
-                        <form action="{{ route('customer.update', $customer->id) }}" method="POST">
+                        <form action="{{ route('student.update', $customer->id) }}" method="POST">
                             @csrf
                             @method('PUT')
                             
@@ -58,7 +58,7 @@
 
                             <div class="mt-4 text-end">
                                 <button type="submit" class="btn btn-success px-4 shadow-sm">
-                                    <i class="fa fa-sync me-1"></i> Update Customer & User Data
+                                    <i class="fa fa-sync me-1"></i> Update Student & User Data
                                 </button>
                             </div>
                         </form>

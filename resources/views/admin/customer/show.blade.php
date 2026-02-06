@@ -1,12 +1,12 @@
 @extends('admin.master.master')
-@section('title', 'Customer Profile | ' . $customer->name)
+@section('title', 'Student Profile | ' . $customer->name)
 
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Customer Profile</h2>
-            <a href="{{ route('customer.index') }}" class="btn btn-secondary shadow-sm">
+            <h2 class="mb-0">Student Profile</h2>
+            <a href="{{ route('student.index') }}" class="btn btn-secondary shadow-sm">
                 <i class="fa fa-arrow-left me-1"></i> Back to List
             </a>
         </div>
@@ -44,7 +44,7 @@
                         <h6 class="mb-0"><i class="fa fa-plus-circle me-1"></i> Assign / Renew Package</h6>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('customer.assignPackage', $customer->id) }}" method="POST">
+                        <form action="{{ route('student.assignPackage', $customer->id) }}" method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Select Package</label>

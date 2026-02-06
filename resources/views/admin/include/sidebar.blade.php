@@ -21,68 +21,183 @@
         {{-- DYNAMIC FEATURE TITLES & MENUS --}}
         @if(isset($globalFeatures))
             @foreach($globalFeatures as $feature)
+
+            @if ($usr->can('mcqView') || $usr->can('bookView'))
                 
                 {{-- 1. Feature Title --}}
                 <li class="sidebar-title">
                     <span>{{ $feature->english_name ?? $feature->bangla_name }}</span>
                 </li>
+                @endif
 
-                {{-- 2. Feature Specific Menus --}}
-                
-                {{-- Condition for '1st-12th Grade' Feature --}}
-                @if($feature->slug == '1st-12th-grade' || $feature->english_name == '1st-12th Grade')
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#questionBankSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="questionBankSubmenu">
-                        <i data-feather="book-open"></i>
-                        <span>Question Bank</span>
-                        <i data-feather="chevron-down" class="ms-auto"></i>
+          
+               {{-- Condition for '1st-12th Grade' Feature --}}
+@if($feature->slug == '1st-12th-grade' || $feature->english_name == '1st-12th Grade')
+@if ($usr->can('mcqAdd') || $usr->can('mcqView') || $usr->can('mcqDelete') || $usr->can('mcqUpdate'))
+<li class="nav-item">
+    <a class="nav-link collapsed" href="#questionBankSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="questionBankSubmenu">
+        <i data-feather="book-open"></i>
+        <span>Question Bank</span>
+        <i data-feather="chevron-down" class="ms-auto"></i>
+    </a>
+    
+    <ul class="collapse list-unstyled {{ Route::is('mcq.*') || Route::is('board.questions.*') || Route::is('institute.questions.*') ? 'show' : '' }}" id="questionBankSubmenu" data-bs-parent="#sidebar-menu">
+        
+        {{-- MCQ Dropdown (Level 2) --}}
+        <li>
+            <a class="nav-link collapsed" href="#mcqSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mcqSubmenu">
+                <span>MCQ</span>
+                <i data-feather="chevron-down" class="ms-auto" style="width: 15px; height: 15px;"></i>
+            </a>
+            {{-- MCQ Items (Level 3) --}}
+            <ul class="collapse list-unstyled {{ Route::is('mcq.*') ? 'show' : '' }}" id="mcqSubmenu" data-bs-parent="#questionBankSubmenu">
+               @if ($usr->can('mcqAdd'))
+                <li>
+                    <a class="nav-link {{ Route::is('mcq.create') ? 'active' : '' }}" href="{{ route('mcq.create') }}" style="padding-left: 3rem;">
+                        <i class="fa fa-plus-circle me-2" style="font-size: 10px;"></i> Add New MCQ
                     </a>
-                    
-                    <ul class="collapse list-unstyled {{ Route::is('mcq.*') ? 'show' : '' }}" id="questionBankSubmenu" data-bs-parent="#sidebar-menu">
-                        
-                        {{-- MCQ Dropdown (Level 2) --}}
-                        <li>
-                            <a class="nav-link collapsed" href="#mcqSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="mcqSubmenu">
-                                <span>MCQ</span>
-                                <i data-feather="chevron-down" class="ms-auto" style="width: 15px; height: 15px;"></i>
-                            </a>
-                            {{-- MCQ Items (Level 3) --}}
-                            <ul class="collapse list-unstyled {{ Route::is('mcq.*') ? 'show' : '' }}" id="mcqSubmenu" data-bs-parent="#questionBankSubmenu">
-                                <li>
-                                    <a class="nav-link {{ Route::is('mcq.create') ? 'active' : '' }}" href="{{ route('mcq.create') }}" style="padding-left: 3rem;">
-                                        <i class="fa fa-plus-circle me-2" style="font-size: 10px;"></i> Add New MCQ
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="nav-link {{ Route::is('mcq.index') ? 'active' : '' }}" href="{{ route('mcq.index') }}" style="padding-left: 3rem;">
-                                        <i class="fa fa-list me-2" style="font-size: 10px;"></i> MCQ List
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        {{-- Other Question Types --}}
-                        {{-- <li>
-                            <a class="nav-link" href="#">CQ</a>
-                        </li> --}}
-                        <li>
-                            <a class="nav-link" href="#">Board Question</a>
-                        </li>
-                    </ul>
                 </li>
                 @endif
+                @if ($usr->can('mcqView') || $usr->can('mcqDelete') || $usr->can('mcqUpdate'))
+                <li>
+                    <a class="nav-link {{ Route::is('mcq.index') ? 'active' : '' }}" href="{{ route('mcq.index') }}" style="padding-left: 3rem;">
+                        <i class="fa fa-list me-2" style="font-size: 10px;"></i> MCQ List
+                    </a>
+                </li>
+                @endif
+            </ul>
+        </li>
+
+        {{-- Board Question (Dynamic) --}}
+        <li>
+            <a class="nav-link {{ Route::is('board.questions.index') ? 'active' : '' }}" href="{{ route('board.questions.index') }}">
+                <i class="fa fa-graduation-cap me-2" style="font-size: 10px;"></i> Board Question
+            </a>
+        </li>
+
+        {{-- Institute Wise List (Dynamic) --}}
+        <li>
+            <a class="nav-link {{ Route::is('institute.questions.index') ? 'active' : '' }}" href="{{ route('institute.questions.index') }}">
+                <i class="fa fa-university me-2" style="font-size: 10px;"></i> Institute Wise List
+            </a>
+        </li>
+    </ul>
+</li>
+@endif
+@elseif($feature->slug == 'book' || $feature->english_name == 'Book')
+
+ @if ($usr->can('bookAdd') || $usr->can('bookView') || $usr->can('bookDelete') || $usr->can('bookUpdate') || $usr->can('bookCategoryAdd') || $usr->can('bookCategoryView') || $usr->can('bookCategoryDelete') || $usr->can('bookCategoryUpdate'))
+
+    {{-- BOOK MANAGEMENT DROPDOWN --}}
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#bookManagementSubmenu" data-bs-toggle="collapse" role="button" 
+           aria-expanded="{{ Route::is('book.*') || Route::is('book-category.*') ? 'true' : 'false' }}" aria-controls="bookManagementSubmenu">
+            <i data-feather="book"></i>
+            <span>Book Management</span>
+            <i data-feather="chevron-down" class="ms-auto"></i>
+        </a>
+        
+        <ul class="collapse list-unstyled {{ Route::is('book.*') || Route::is('book-category.*') ? 'show' : '' }}" id="bookManagementSubmenu" data-bs-parent="#sidebar-menu">
+            
+
+            @if($usr->can('bookCategoryAdd') || $usr->can('bookCategoryView') || $usr->can('bookCategoryDelete') || $usr->can('bookCategoryUpdate'))
+            {{-- Book Category --}}
+            <li>
+                <a class="nav-link {{ Route::is('book-category.*') ? 'active' : '' }}" href="{{ route('book-category.index') }}">
+                    <i class="fa fa-list-ul me-2" style="font-size: 10px;"></i> Book Category
+                </a>
+            </li>
+            @endif
+            @if($usr->can('bookView') || $usr->can('bookDelete') || $usr->can('bookUpdate'))
+
+            {{-- Book List (Updated with Route) --}}
+            <li>
+                <a class="nav-link {{ Route::is('book.index') ? 'active' : '' }}" href="{{ route('book.index') }}">
+                    <i class="fa fa-file-pdf me-2" style="font-size: 10px;"></i> Book/PDF List
+                </a>
+            </li>
+            @endif
+
+             @if($usr->can('bookAdd'))
+
+            {{-- Add New Book --}}
+            <li>
+                <a class="nav-link {{ Route::is('book.create') ? 'active' : '' }}" href="{{ route('book.create') }}">
+                    <i class="fa fa-plus-circle me-2" style="font-size: 10px;"></i> Add New Book
+                </a>
+            </li>
+            @endif
+
+        </ul>
+    </li>
+    @endif
+@endif
 
             @endforeach
         @endif
+       
 
-        @if ($usr->can('userView')) 
+        @if ($usr->can('examAdd') || $usr->can('examView') || $usr->can('examDelete') || $usr->can('examUpdate') || $usr->can('examCategoryAdd') || $usr->can('examCategoryView') || $usr->can('examCategoryDelete') || $usr->can('examCategoryUpdate') || $usr->can('examPackageAdd') || $usr->can('examPackageView') || $usr->can('examPackageDelete') || $usr->can('examPackageUpdate'))
+{{-- EXAM MANAGEMENT --}}
+<li class="sidebar-title">
+    <span>Exam Management</span>
+</li>
+
 <li class="nav-item">
-    <a class="nav-link {{ Route::is('customer.*') ? 'active' : '' }}" href="{{ route('customer.index') }}">
+    <a class="nav-link collapsed" href="#examManagementSubmenu" data-bs-toggle="collapse" role="button" 
+       aria-expanded="{{ Route::is('exam-category.*') || Route::is('exam-setup.*') || Route::is('exam-package.*') ? 'true' : 'false' }}" aria-controls="examManagementSubmenu">
+        <i data-feather="edit-3"></i>
+        <span>Exams</span>
+        <i data-feather="chevron-down" class="ms-auto"></i>
+    </a>
+    
+    <ul class="collapse list-unstyled {{ Route::is('exam-category.*') || Route::is('exam-setup.*') || Route::is('exam-package.*') ? 'show' : '' }}" id="examManagementSubmenu" data-bs-parent="#sidebar-menu">
+        
+
+        @if($usr->can('examCategoryAdd') || $usr->can('examCategoryView') || $usr->can('examCategoryDelete') || $usr->can('examCategoryUpdate'))
+        {{-- Exam Category --}}
+        <li>
+            <a class="nav-link {{ Route::is('exam-category.*') ? 'active' : '' }}" href="{{ route('exam-category.index') }}">
+                <i class="fa fa-list-alt me-2" style="font-size: 10px;"></i> Exam Category
+            </a>
+        </li>
+        @endif
+
+
+@if($usr->can('examAdd') || $usr->can('examView') || $usr->can('examDelete') || $usr->can('examUpdate'))
+        {{-- Exam Setup (General) --}}
+        <li>
+            <a class="nav-link {{ Route::is('exam-setup.*') ? 'active' : '' }}" href="{{ route('exam-setup.index') }}">
+                <i class="fa fa-cog me-2" style="font-size: 10px;"></i> Exam Setup
+            </a>
+        </li>
+
+        {{-- Exam Package (New Module) --}}
+        <li>
+            <a class="nav-link {{ Route::is('exam-package.*') ? 'active' : '' }}" href="{{ route('exam-package.index') }}">
+                <i class="fa fa-archive me-2" style="font-size: 10px;"></i> Exam Package
+            </a>
+        </li>
+        @endif
+
+    </ul>
+</li>
+
+@endif
+ @if ($usr->can('studentView') || $usr->can('studentAdd') || $usr->can('studentUpdate') || $usr->can('studentDelete'))
+ <li class="sidebar-title">
+                    <span>Student Management</span>
+        </li>
+       
+<li class="nav-item">
+    <a class="nav-link {{ Route::is('student.*') ? 'active' : '' }}" href="{{ route('student.index') }}">
         <i data-feather="users"></i>
-        <span>Customer Management</span>
+        <span>Student</span>
     </a>
 </li>
 @endif
+
+@if ($usr->can('packageAdd') || $usr->can('packageView') || $usr->can('packageFeatureAdd') || $usr->can('packageFeatureView'))
 
         <li class="sidebar-title">
                     <span>Package And Feature</span>
@@ -96,24 +211,35 @@
         <i data-feather="chevron-down" class="ms-auto"></i>
     </a>
     <ul class="collapse list-unstyled {{ Route::is('package.*') || Route::is('feature-list.*') ? 'show' : '' }}" id="packageSubmenu" data-bs-parent="#sidebar-menu">
+        
+        {{-- Feature List --}}
+        @if($usr->can('packageFeatureAdd') || $usr->can('packageFeatureView'))
         <li>
             <a class="nav-link {{ Route::is('feature-list.index') ? 'active' : '' }}" href="{{ route('feature-list.index') }}">
                 Feature List
             </a>
         </li>
+        @endif
+
+        {{-- Packages --}}
+        @if ($usr->can('packageView'))
         <li>
             <a class="nav-link {{ Route::is('package.index') ? 'active' : '' }}" href="{{ route('package.index') }}">
                 All Packages
             </a>
         </li>
+        @endif
+        {{-- Add New Package --}}
+        @if ($usr->can('packageAdd'))
         <li>
             <a class="nav-link {{ Route::is('package.create') ? 'active' : '' }}" href="{{ route('package.create') }}">
                 Add New Package
             </a>
         </li>
+        @endif
     </ul>
 </li>
-
+@endif
         {{-- MASTER SETUP DROPDOWN --}}
         @if ($usr->can('featureView') || $usr->can('featureAdd') || 
              $usr->can('categoryView') || $usr->can('categoryAdd') || 

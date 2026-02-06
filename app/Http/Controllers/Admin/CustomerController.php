@@ -131,7 +131,7 @@ class CustomerController extends Controller
         ]);
 
         DB::commit();
-        return redirect()->route('customer.index')->with('success', 'Customer & Login access created successfully!');
+        return redirect()->route('student.index')->with('success', 'Customer & Login access created successfully!');
     } catch (Exception $e) {
         DB::rollBack();
         return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
@@ -256,7 +256,7 @@ private function createNewSubscription($userId, $packageId, $paymentId, $now, $d
         return view('admin.customer.edit', compact('customer'));
     } catch (Exception $e) {
         Log::error("Error loading customer edit page: " . $e->getMessage());
-        return redirect()->route('customer.index')->with('error', 'Customer not found.');
+        return redirect()->route('student.index')->with('error', 'Customer not found.');
     }
 }
 
@@ -299,7 +299,7 @@ public function update(Request $request, $id)
 
         DB::commit();
         Log::info("Customer and User account updated: ID " . $id);
-        return redirect()->route('customer.index')->with('success', 'Customer updated successfully!');
+        return redirect()->route('student.index')->with('success', 'Customer updated successfully!');
 
     } catch (Exception $e) {
         DB::rollBack();
@@ -316,10 +316,10 @@ public function update(Request $request, $id)
             }
             $customer->delete();
             Log::info('Customer deleted successfully.', ['id' => $customer->id]);
-            return redirect()->route('customer.index')->with('success', 'Customer deleted successfully.');
+            return redirect()->route('student.index')->with('success', 'Customer deleted successfully.');
         } catch (Exception $e) {
             Log::error("Failed to delete customer ID {$customer->id}: " . $e);
-            return redirect()->route('customer.index')->with('error', 'Failed to delete customer.');
+            return redirect()->route('student.index')->with('error', 'Failed to delete customer.');
         }
     }
 }

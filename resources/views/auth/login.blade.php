@@ -9,11 +9,11 @@
 	<meta name="description" content="{{ $description }}">
 	<meta property="og:title" content="{{ $ins_name }}">
 	<meta property="og:description" content="{{ $description }}">
-	<meta property="og:image" content="{{ asset('/') }}{{ $logo }}">
+	<meta property="og:image" content="{{ asset('/') }}{{ $front_logo_name }}">
     <!-- Title -->
     <title>Login</title>
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('/') }}{{ $icon }}">
+    <link rel="shortcut icon" href="{{ asset('/') }}{{ $front_icon_name }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -24,13 +24,13 @@
     <div class="auth-wrapper">
         <div class="auth-container">
             <div class="auth-branding-column">
-                <h1 class="branding-title">{{ $ins_name }}</h1>
-                <p class="branding-subtitle">The future of fashion retail management is here. Streamlined, simple, and powerful.</p>
+                <h1 class="branding-title">{{ $front_ins_name }}</h1>
+                <p class="branding-subtitle"> Streamlined, simple, and powerful.</p>
             </div>
 
             <div class="auth-form-column">
                 <div class="auth-form-header">
-                    <img src="{{ asset('/') }}{{ $logo }}" alt="Logo" class="auth-logo">
+                    <img src="{{asset('/')}}{{$front_logo_name}}" alt="Logo" class="auth-logo">
                     <h3 class="auth-title">Welcome Back!</h3>
                     <p class="text-muted">Sign in to continue.</p>
                 </div>
