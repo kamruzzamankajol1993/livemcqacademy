@@ -18,6 +18,11 @@ use App\Http\Controllers\Api\McqQuestionController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\PackageController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\ExamController;
+use App\Http\Controllers\Api\SelfTestController;
+use App\Http\Controllers\Api\BookController;
+
+
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,102 +37,85 @@ Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword']);
 Route::middleware('auth:sanctum')->group(function () {
 
 
-// সাবস্ক্রিপশন বা প্যাকেজ হিস্ট্রি
-    Route::get('/my-subscriptions', [SubscriptionController::class, 'subscriptionHistory']);
-    
-    // পেমেন্ট হিস্ট্রি
-    Route::get('/my-payments', [SubscriptionController::class, 'paymentHistory']);
+// start book routes
+Route::get('/book_questions', [BookController::class, 'getQuestionsByFilter']);
+Route::post('/book_review_submit', [BookController::class, 'submitReview']);
+Route::get('/book_reviews', [BookController::class, 'getReviews']);
+Route::get('/books', [BookController::class, 'index']); 
+Route::get('/book_detail', [BookController::class, 'show']); 
+Route::post('/book_purchase', [BookController::class, 'payForBook']); 
+ Route::post('/book_download_track', [BookController::class, 'trackDownload']);
+// end book routes
+
+
+// Self Test Routes
+Route::get('/assessment_config', [SelfTestController::class, 'getConfig']);
+    Route::post('/assessment_start', [SelfTestController::class, 'startSelfTest']);
+    Route::post('/assessment_submit', [SelfTestController::class, 'submitResult']);
+    Route::get('/assessment_history', [SelfTestController::class, 'userHistory']);
+    Route::get('/assessment_leaderboard', [SelfTestController::class, 'selfTestLeaderboard']);
+    Route::get('/assessment_review', [SelfTestController::class, 'reviewSelfTest']);
+// end Self Test Routes
+
+// start exam routes
+Route::get('/exam_history', [ExamController::class, 'examHistory']);
+Route::get('/leaderboard', [ExamController::class, 'leaderboard']);
+Route::get('/exam_questions', [ExamController::class, 'getQuestions']);
+Route::get('/all_exam', [ExamController::class, 'index']); // সকল এক্সাম
+Route::get('/class_wise_exam', [ExamController::class, 'classWise']); // ?class_id=1
+Route::get('/department_wise_exam', [ExamController::class, 'departmentWise']); // ?department_id=1
+Route::get('/subject_wise_exam', [ExamController::class, 'subjectWise']);
+Route::get('/exam_detail', [ExamController::class, 'show']);
+Route::post('/submit_exam', [ExamController::class, 'submitExam']);
+// end exam routes
+
+
+
+// Subscription & Package Routes
+
+Route::get('/my-subscriptions', [SubscriptionController::class, 'subscriptionHistory']);
+Route::get('/my-payments', [SubscriptionController::class, 'paymentHistory']);
 
 Route::get('/payment-methods', [SubscriptionController::class, 'paymentMethods']);
 Route::post('/purchase-package', [SubscriptionController::class, 'purchasePackage']);
 
 Route::get('/packages', [PackageController::class, 'index']);
-Route::get('/packages/{id}', [PackageController::class, 'show']);
+Route::get('/package_detail', [PackageController::class, 'show']);
+
+// end Subscription & Package Routes
 
 // MCQ List with Pagination & Filters
 Route::get('/mcqs', [McqQuestionController::class, 'index']);
-
-// Single MCQ Details (Optional)
-Route::get('/mcqs/{id}', [McqQuestionController::class, 'show']);
-// 1. Academic Year List
+Route::get('/mcqs_detail', [McqQuestionController::class, 'show']);
 Route::get('/academic-years', [AcademicYearController::class, 'index']);
-
-// 2. Board List
 Route::get('/boards', [BoardController::class, 'index']);
-
-// 1. All Institute List
 Route::get('/institutes', [InstituteController::class, 'index']);
-
-// 2. Type Wise Institute List
-// এখানে {type} ডাইনামিক হবে (যেমন: school, college, university ইত্যাদি)
-Route::get('/institutes/type/{type}', [InstituteController::class, 'getByType']);
-    
-    // Dashboard / User Profile
-    Route::get('/dashboard', [AuthController::class, 'dashboard']);
-    
-    // Logout
-    Route::post('/logout', [AuthController::class, 'logout']);
-
-
-    // ১. প্রোফাইল আপডেট রিকোয়েস্ট (ডাটা সহ এখানে হিট করবে)
-    Route::post('/profile/update-request', [AuthController::class, 'updateProfileRequest']);
-
-    // ২. যদি OTP লাগে, তখন OTP সহ এখানে হিট করবে
-    Route::post('/profile/confirm-update', [AuthController::class, 'confirmProfileUpdate']);
-
-    // 1. All Category List
+Route::get('/institutes_type', [InstituteController::class, 'getByType']);
 Route::get('/categories', [CategoryController::class, 'index']);
-
-// 2. Feature Wise Category List (By Feature ID)
-// উদাহরণ: /api/categories/feature/1
-Route::get('/categories/feature/{id}', [CategoryController::class, 'getCategoriesByFeature']);
-
+Route::get('/categories_feature', [CategoryController::class, 'getCategoriesByFeature']);
 Route::get('/all_features', [FeatureController::class, 'index']);
-
 Route::get('/classes', [ClassController::class, 'index']);
-
-// 2. Category Wise Class List (By Category ID)
-// উদাহরণ: /api/classes/category/1
-Route::get('/classes/category/{id}', [ClassController::class, 'getClassesByCategory']);
-
-// 1. All Department List
-Route::get('/departments', [DepartmentController::class, 'index']);
-
-// 2. Class Wise Department List (By Class ID)
-// উদাহরণ: /api/departments/class/1
-Route::get('/departments/class/{id}', [DepartmentController::class, 'getDepartmentsByClass']);
-
-
-// 1. All Subject List
+Route::get('/classes_category', [ClassController::class, 'getClassesByCategory']);
+Route::get('/departments', [DepartmentController::class, 'index']);  
+Route::get('/departments_class', [DepartmentController::class, 'getDepartmentsByClass']);
 Route::get('/subjects', [SubjectController::class, 'index']);
-
-// 2. Class Wise Subject List (By Class ID)
-// Example: /api/subjects/class/1
-Route::get('/subjects/filter', [SubjectController::class, 'filterSubjects']);
-
-// 1. All Section List
+Route::get('/subjects_filter', [SubjectController::class, 'filterSubjects']);
 Route::get('/sections', [SectionController::class, 'index']);
-
-// 2. Filter Sections (By Class ID or Subject ID)
-// Example: /api/sections/filter?class_id=1
-Route::get('/sections/filter', [SectionController::class, 'filterSections']);
-
-// 1. All Chapter List
+Route::get('/sections_filter', [SectionController::class, 'filterSections']);
 Route::get('/chapters', [ChapterController::class, 'index']);
-
-// 2. Filter Chapters (By Subject, Section, or Class)
-// Example: /api/chapters/filter?subject_id=1
-// Example: /api/chapters/filter?subject_id=1&section_id=2
-Route::get('/chapters/filter', [ChapterController::class, 'filterChapters']);
-
-// 1. All Topic List
+Route::get('/chapters_filter', [ChapterController::class, 'filterChapters']);
 Route::get('/topics', [TopicController::class, 'index']);
+Route::get('/topics_filter', [TopicController::class, 'filterTopics']);
 
-// 2. Filter Topics (By Chapter, Subject, or Class)
-// Example: /api/topics/filter?chapter_id=1
-Route::get('/topics/filter', [TopicController::class, 'filterTopics']);
+//end MCQ List with Pagination & Filters
 
-    // Default User Route (Optional - keeping your existing one)
+// Dashboard / User Profile
+Route::get('/dashboard', [AuthController::class, 'dashboard']);
+Route::post('/logout', [AuthController::class, 'logout']);
+Route::post('/profile/update-request', [AuthController::class, 'updateProfileRequest']);
+Route::post('/profile/confirm-update', [AuthController::class, 'confirmProfileUpdate']);
+// end Dashboard / User Profile
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });

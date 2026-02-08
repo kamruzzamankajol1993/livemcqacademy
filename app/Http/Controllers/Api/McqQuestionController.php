@@ -123,8 +123,10 @@ class McqQuestionController extends Controller
     /**
      * Single MCQ Details
      */
-    public function show($id)
+    public function show(Request $request)
     {
+        $id = $request->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
+    
         try {
             $mcq = McqQuestion::with([
                 'category', 'class', 'subject', 'chapter', 'topic', 'section', 'department'

@@ -114,7 +114,7 @@
                                         <td>{{ $sub->end_date->format('d M, Y') }}</td>
                                         <td class="text-center">
                                             @if($sub->user->customer)
-                                            <a href="{{ route('customer.show', $sub->user->customer->id) }}" class="btn btn-xs btn-primary shadow-sm"><i class="fa fa-eye"></i> Profile</a>
+                                            <a href="{{ route('student.show', $sub->user->customer->id) }}" class="btn btn-xs btn-primary shadow-sm"><i class="fa fa-eye"></i> Profile</a>
                                             @endif
                                         </td>
                                     </tr>

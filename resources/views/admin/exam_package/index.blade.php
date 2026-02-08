@@ -99,13 +99,16 @@
                         let deptName = item.department ? ` (${item.department.name_en})` : '';
                         let typeBadge = item.exam_type === 'free' ? '<span class="badge bg-success">Free</span>' : '<span class="badge bg-primary">Paid</span>';
                         let statusBadge = item.status == 1 ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-                        
+                        let categoryName = item.category ? item.category.name_en : '--';
                         // এডিট লিঙ্কের জন্য ডাইনামিক ইউআরএল জেনারেট করা
                         let editUrl = routes.edit.replace(':id', item.id);
 let showUrl = routes.show.replace(':id', item.id);
                         rows += `<tr>
                             <td>${sl}</td>
-                            <td><strong>${item.exam_name}</strong></td>
+                            <td>
+        <strong>${item.exam_name}</strong><br>
+        <small class="text-muted">Cat: ${categoryName}</small>
+    </td>
                             <td>${className}${deptName}</td>
                             <td>${typeBadge}</td>
                             <td>${item.price > 0 ? item.price + ' TK' : '--'}</td>

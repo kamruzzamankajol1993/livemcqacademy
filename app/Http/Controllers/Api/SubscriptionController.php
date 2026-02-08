@@ -34,7 +34,8 @@ class SubscriptionController extends Controller
             $package = Package::findOrFail($request->package_id);
             $now = Carbon::now('Asia/Dhaka'); // বাংলাদেশ স্ট্যান্ডার্ড টাইম
             $durationDays = ($package->type == 'yearly') ? 365 : 30;
-
+$limitFeature = $package->features->where('code', 'paid_exam_package')->first();
+        $defaultLimit = $limitFeature ? $limitFeature->pivot->value : '0';
             // ২. পেমেন্ট রেকর্ড তৈরি
             $payment = Payment::create([
                 'user_id'         => $user->id,
@@ -55,11 +56,19 @@ class SubscriptionController extends Controller
 
             if ($activeSub) {
                 if ($activeSub->package_id == $package->id) {
+
+                // রিনিউ করলে নতুন লিমিট আগেরটার সাথে যোগ হবে (যদি আনলিমিটেড না হয়)
+            $newEndDate = Carbon::parse($activeSub->end_date)->addDays($durationDays);
+            $newLimit = (strtolower($defaultLimit) == 'unlimited' || strtolower($activeSub->remaining_exam_limit) == 'unlimited') 
+                        ? 'Unlimited' 
+                        : (int)$activeSub->remaining_exam_limit + (int)$defaultLimit;
+
                     // লজিক ১: Renew (একই প্যাকেজ হলে বর্তমান মেয়াদের সাথে নতুন মেয়াদ যোগ হবে)
                     $newEndDate = Carbon::parse($activeSub->end_date, 'Asia/Dhaka')->addDays($durationDays);
                     
                     $activeSub->update([
                         'end_date'   => $newEndDate,
+                        'remaining_exam_limit' => $newLimit,
                         'payment_id' => $payment->id
                     ]);
                     $message = "Package renewed successfully. New expire date: " . $newEndDate->format('d M, Y');
@@ -67,12 +76,12 @@ class SubscriptionController extends Controller
                     // লজিক ২: Switch (ভিন্ন প্যাকেজ হলে আগেরটি Expired করে নতুনটি শুরু হবে)
                     $activeSub->update(['status' => 'expired']);
                     
-                    $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays);
+                    $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $defaultLimit);
                     $message = "Switched to " . $package->name . " successfully.";
                 }
             } else {
                 // কোনো একটিভ প্যাকেজ না থাকলে নতুন সাবস্ক্রিপশন
-                $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays);
+                $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $defaultLimit);
                 $message = "Package purchased successfully.";
             }
 
@@ -97,7 +106,7 @@ class SubscriptionController extends Controller
     /**
      * হেল্পার মেথড: নতুন সাবস্ক্রিপশন এন্ট্রি
      */
-    private function createNewSub($userId, $packageId, $paymentId, $now, $days)
+    private function createNewSub($userId, $packageId, $paymentId, $now, $days, $defaultLimit)
     {
         return UserSubscription::create([
             'user_id'    => $userId,
@@ -105,6 +114,7 @@ class SubscriptionController extends Controller
             'payment_id' => $paymentId,
             'start_date' => $now,
             'end_date'   => $now->copy()->addDays($days),
+            'remaining_exam_limit' => $defaultLimit,
             'status'     => 'active'
         ]);
     }

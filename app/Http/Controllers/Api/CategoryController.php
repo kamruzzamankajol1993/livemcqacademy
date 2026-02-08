@@ -66,8 +66,10 @@ class CategoryController extends Controller
     }
 
     // ২. ফিচার অনুযায়ী ক্যাটাগরি লিস্ট (ID দিয়ে)
-    public function getCategoriesByFeature($id)
+    public function getCategoriesByFeature(Request $request)
     {
+        $id = $request->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
+    
         try {
             // ফিচার চেক করা
             $feature = Feature::where('id', $id)->where('status', 1)->first();

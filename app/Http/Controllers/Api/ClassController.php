@@ -54,8 +54,9 @@ class ClassController extends Controller
     }
 
     // ২. ক্যাটাগরি অনুযায়ী ক্লাস লিস্ট (Category Wise Class List - By ID)
-    public function getClassesByCategory($categoryId)
+    public function getClassesByCategory(Request $request)
     {
+        $categoryId = $request->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
         try {
             // ক্যাটাগরি চেক করা
             $category = Category::where('id', $categoryId)->where('status', 1)->first();

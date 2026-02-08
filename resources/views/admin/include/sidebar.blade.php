@@ -216,7 +216,7 @@
         @if($usr->can('packageFeatureAdd') || $usr->can('packageFeatureView'))
         <li>
             <a class="nav-link {{ Route::is('feature-list.index') ? 'active' : '' }}" href="{{ route('feature-list.index') }}">
-                Feature List
+              <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i>  Feature List
             </a>
         </li>
         @endif
@@ -225,7 +225,7 @@
         @if ($usr->can('packageView'))
         <li>
             <a class="nav-link {{ Route::is('package.index') ? 'active' : '' }}" href="{{ route('package.index') }}">
-                All Packages
+               <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> All Packages
             </a>
         </li>
         @endif
@@ -233,7 +233,7 @@
         @if ($usr->can('packageAdd'))
         <li>
             <a class="nav-link {{ Route::is('package.create') ? 'active' : '' }}" href="{{ route('package.create') }}">
-                Add New Package
+               <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Add New Package
             </a>
         </li>
         @endif
@@ -261,57 +261,68 @@
 
                 {{-- BOARD --}}
                 @if ($usr->can('boardAdd') || $usr->can('boardView') || $usr->can('boardDelete') || $usr->can('boardUpdate'))
-                <li><a class="nav-link {{ Route::is('board.index') ? 'active' : '' }}" href="{{ route('board.index') }}">Board</a></li>
+                <li><a class="nav-link {{ Route::is('board.index') ? 'active' : '' }}" href="{{ route('board.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Board</a></li>
                 @endif
 
                 {{-- ACADEMIC YEAR --}}
                 @if ($usr->can('academicYearAdd') || $usr->can('academicYearView') || $usr->can('academicYearDelete') || $usr->can('academicYearUpdate'))
-                <li><a class="nav-link {{ Route::is('academicYear.index') ? 'active' : '' }}" href="{{ route('academicYear.index') }}">Academic Year</a></li>
+                <li><a class="nav-link {{ Route::is('academicYear.index') ? 'active' : '' }}" href="{{ route('academicYear.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Academic Year</a></li>
                 @endif
 
                 {{-- INSTITUTE --}}
                 @if ($usr->can('instituteAdd') || $usr->can('instituteView'))
-                <li><a class="nav-link {{ Route::is('institute.index') ? 'active' : '' }}" href="{{ route('institute.index') }}">Institute</a></li>
+                <li><a class="nav-link {{ Route::is('institute.index') ? 'active' : '' }}" href="{{ route('institute.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Institute</a></li>
                 @endif
 
                 {{-- FEATURE --}}
                 @if ($usr->can('featureAdd') || $usr->can('featureView') || $usr->can('featureDelete') || $usr->can('featureUpdate'))
-                <li><a class="nav-link {{ Route::is('feature.index') ? 'active' : '' }}" href="{{ route('feature.index') }}">Feature</a></li>
+                <li><a class="nav-link {{ Route::is('feature.index') ? 'active' : '' }}" href="{{ route('feature.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Feature</a></li>
                 @endif
 
                 {{-- CATEGORY --}}
                 @if ($usr->can('categoryAdd') || $usr->can('categoryView') || $usr->can('categoryDelete') || $usr->can('categoryUpdate'))
-                <li><a class="nav-link {{ Route::is('category.index') ? 'active' : '' }}" href="{{ route('category.index') }}">Category</a></li>
+                <li><a class="nav-link {{ Route::is('category.index') ? 'active' : '' }}" href="{{ route('category.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Category</a></li>
                 @endif 
 
                 {{-- CLASS --}}
                 @if ($usr->can('schoolClassAdd') || $usr->can('schoolClassView') || $usr->can('schoolClassDelete') || $usr->can('schoolClassUpdate'))
-                <li><a class="nav-link {{ Route::is('schoolClass.index') ? 'active' : '' }}" href="{{ route('schoolClass.index') }}">Class</a></li>
+                <li><a class="nav-link {{ Route::is('schoolClass.index') ? 'active' : '' }}" href="{{ route('schoolClass.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Class</a></li>
                 @endif
 
                 {{-- CLASS DEPARTMENT --}}
                 @if ($usr->can('classDepartmentAdd') || $usr->can('classDepartmentView') || $usr->can('classDepartmentDelete') || $usr->can('classDepartmentUpdate'))
-                <li><a class="nav-link {{ Route::is('classDepartment.index') ? 'active' : '' }}" href="{{ route('classDepartment.index') }}">Class Department</a></li>
+                <li><a class="nav-link {{ Route::is('classDepartment.index') ? 'active' : '' }}" href="{{ route('classDepartment.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Class Department</a></li>
                 @endif
 
                 {{-- SUBJECT --}}
                 @if ($usr->can('subjectAdd') || $usr->can('subjectView') || $usr->can('subjectDelete') || $usr->can('subjectUpdate'))
-                <li><a class="nav-link {{ Route::is('subject.index') ? 'active' : '' }}" href="{{ route('subject.index') }}">Subject</a></li>
+                <li><a class="nav-link {{ Route::is('subject.index') ? 'active' : '' }}" href="{{ route('subject.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Subject</a></li>
                 @endif
 
                 {{-- SECTION --}}
                 @if ($usr->can('sectionAdd') || $usr->can('sectionView') || $usr->can('sectionDelete') || $usr->can('sectionUpdate'))
-                <li><a class="nav-link {{ Route::is('section.index') ? 'active' : '' }}" href="{{ route('section.index') }}">Section</a></li>
+                <li><a class="nav-link {{ Route::is('section.index') ? 'active' : '' }}" href="{{ route('section.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Section</a></li>
                 @endif
 
                 {{-- CHAPTER --}}
                 @if ($usr->can('chapterAdd') || $usr->can('chapterView') || $usr->can('chapterDelete') || $usr->can('chapterUpdate'))
-                <li><a class="nav-link {{ Route::is('chapter.index') ? 'active' : '' }}" href="{{ route('chapter.index') }}">Chapter</a></li>
+                <li><a class="nav-link {{ Route::is('chapter.index') ? 'active' : '' }}" href="{{ route('chapter.index') }}"> 
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Chapter</a></li>
                 @endif
 
                 {{-- TOPIC --}}
                 @if ($usr->can('topicAdd') || $usr->can('topicView') || $usr->can('topicDelete') || $usr->can('topicUpdate'))
-                <li><a class="nav-link {{ Route::is('topic.index') ? 'active' : '' }}" href="{{ route('topic.index') }}">Topic</a></li>
+                <li><a class="nav-link {{ Route::is('topic.index') ? 'active' : '' }}" href="{{ route('topic.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Topic</a></li>
                 @endif
 
             </ul>
@@ -336,19 +347,23 @@
                 @endif
 
                 @if ($usr->can('socialLinkAdd') || $usr->can('socialLinkView') || $usr->can('socialLinkDelete') || $usr->can('socialLinkUpdate'))
-                <li><a class="nav-link {{ Route::is('socialLink.index') || Route::is('socialLink.edit') || Route::is('socialLink.create') ? 'active' : '' }}" href="{{ route('socialLink.index') }}">Social Link</a></li>
+                <li><a class="nav-link {{ Route::is('socialLink.index') || Route::is('socialLink.edit') || Route::is('socialLink.create') ? 'active' : '' }}" href="{{ route('socialLink.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Social Link</a></li>
                 @endif
 
                 @if ($usr->can('extraPageAdd') || $usr->can('extraPageView') || $usr->can('extraPageDelete') || $usr->can('extraPageUpdate'))
-                <li><a class="nav-link {{ Route::is('extraPage.index') || Route::is('extraPage.edit') || Route::is('extraPage.create') ? 'active' : '' }}" href="{{ route('extraPage.index') }}">Extra Page</a></li>
+                <li><a class="nav-link {{ Route::is('extraPage.index') || Route::is('extraPage.edit') || Route::is('extraPage.create') ? 'active' : '' }}" href="{{ route('extraPage.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Extra Page</a></li>
                 @endif
 
                 @if ($usr->can('messageAdd') || $usr->can('messageView') || $usr->can('messageDelete') || $usr->can('messageUpdate'))
-                <li><a class="nav-link {{ Route::is('message.index') || Route::is('message.edit') || Route::is('message.create') ? 'active' : '' }}" href="{{ route('message.index') }}">Message</a></li>
+                <li><a class="nav-link {{ Route::is('message.index') || Route::is('message.edit') || Route::is('message.create') ? 'active' : '' }}" href="{{ route('message.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Message</a></li>
                 @endif
 
                 @if ($usr->can('aboutUsAdd') || $usr->can('aboutUsView') || $usr->can('aboutUsDelete') || $usr->can('aboutUsUpdate'))
-                <li><a class="nav-link {{ Route::is('aboutUs.index') || Route::is('aboutUs.edit') || Route::is('aboutUs.create') ? 'active' : '' }}" href="{{ route('aboutUs.index') }}">About Us</a></li>
+                <li><a class="nav-link {{ Route::is('aboutUs.index') || Route::is('aboutUs.edit') || Route::is('aboutUs.create') ? 'active' : '' }}" href="{{ route('aboutUs.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> About Us</a></li>
                 @endif
             </ul>
         </li>
@@ -369,11 +384,13 @@
             <ul class="collapse list-unstyled {{ Route::is('users.show') || Route::is('users.index') || Route::is('users.edit') || Route::is('users.create') || Route::is('branch.index') || Route::is('branch.edit') || Route::is('branch.create') || Route::is('designation.index') || Route::is('designation.edit') || Route::is('designation.create') ? 'show' : '' }}" id="accountSettingsSubmenu" data-bs-parent="#sidebar-menu">
 
                 @if ($usr->can('designationAdd') || $usr->can('designationView') || $usr->can('designationDelete') || $usr->can('designationUpdate'))
-                <li><a class="nav-link {{ Route::is('designation.index') || Route::is('designation.edit') || Route::is('designation.create') ? 'active' : '' }}" href="{{ route('designation.index') }}">Designation</a></li>
+                <li><a class="nav-link {{ Route::is('designation.index') || Route::is('designation.edit') || Route::is('designation.create') ? 'active' : '' }}" href="{{ route('designation.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Designation</a></li>
                 @endif
 
                 @if ($usr->can('userAdd') || $usr->can('userView') || $usr->can('userDelete') || $usr->can('userUpdate'))
-                <li><a class="nav-link {{ Route::is('users.show') || Route::is('users.index') || Route::is('users.edit') || Route::is('users.create') ? 'active' : '' }}" href="{{ route('users.index') }}">User</a></li>
+                <li><a class="nav-link {{ Route::is('users.show') || Route::is('users.index') || Route::is('users.edit') || Route::is('users.create') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> User</a></li>
                 @endif
 
             </ul>
@@ -390,15 +407,18 @@
             <ul class="collapse list-unstyled {{ Route::is('roles.show') || Route::is('permissions.index') || Route::is('permissions.edit') || Route::is('permissions.create') || Route::is('roles.index') || Route::is('roles.edit') || Route::is('roles.create') || Route::is('systemInformation.index') || Route::is('systemInformation.edit') || Route::is('systemInformation.create') ? 'show' : '' }}" id="generalSettingsSubmenu" data-bs-parent="#sidebar-menu">
 
                 @if ($usr->can('panelSettingAdd') || $usr->can('panelSettingView') || $usr->can('panelSettingDelete') || $usr->can('panelSettingUpdate'))
-                <li><a class="nav-link {{ Route::is('systemInformation.index') || Route::is('systemInformation.edit') || Route::is('systemInformation.create') ? 'active' : '' }}" href="{{ route('systemInformation.index') }}">Panel Settings</a></li>
+                <li><a class="nav-link {{ Route::is('systemInformation.index') || Route::is('systemInformation.edit') || Route::is('systemInformation.create') ? 'active' : '' }}" href="{{ route('systemInformation.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Panel Settings</a></li>
                 @endif
 
                 @if ($usr->can('roleAdd') || $usr->can('roleView') || $usr->can('roleEdit') || $usr->can('roleDelete'))
-                <li><a class="nav-link {{ Route::is('roles.show') || Route::is('roles.index') || Route::is('roles.edit') || Route::is('roles.create') ? 'active' : '' }}" href="{{ route('roles.index') }}">Role Management</a></li>
+                <li><a class="nav-link {{ Route::is('roles.show') || Route::is('roles.index') || Route::is('roles.edit') || Route::is('roles.create') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Role Management</a></li>
                 @endif
 
                 @if ($usr->can('permissionAdd') || $usr->can('permissionView') || $usr->can('permissionDelete') || $usr->can('permissionUpdate'))
-                <li><a class="nav-link {{ Route::is('permissions.index') || Route::is('permissions.edit') || Route::is('permissions.create') ? 'active' : '' }}" href="{{ route('permissions.index') }}">Permission Management</a></li>
+                <li><a class="nav-link {{ Route::is('permissions.index') || Route::is('permissions.edit') || Route::is('permissions.create') ? 'active' : '' }}" href="{{ route('permissions.index') }}">
+                    <i class="fa fa-arrow-right me-2" style="font-size:10px;"></i> Permission Management</a></li>
                 @endif
 
             </ul>

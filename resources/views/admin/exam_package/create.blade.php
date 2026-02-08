@@ -23,6 +23,17 @@
                         <form action="{{ route('exam-package.store') }}" method="POST">
                             @csrf
                             <div class="row">
+
+                                {{-- Category Selection --}}
+<div class="col-md-12 mb-3">
+    <label class="fw-bold">Exam Category <span class="text-danger">*</span></label>
+    <select name="exam_category_id" class="form-control select2" required>
+        <option value="">-- Select Category --</option>
+        @foreach($categories as $cat)
+            <option value="{{ $cat->id }}">{{ $cat->name_en }}</option>
+        @endforeach
+    </select>
+</div>
                                 {{-- Exam Basic Info --}}
                                 <div class="col-md-12 mb-3">
                                     <label class="fw-bold">Exam Name <span class="text-danger">*</span></label>

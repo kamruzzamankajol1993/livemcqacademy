@@ -71,8 +71,10 @@ class DepartmentController extends Controller
     }
 
     // ২. ক্লাস অনুযায়ী ডিপার্টমেন্ট লিস্ট (Class Wise Department List - By ID)
-    public function getDepartmentsByClass($classId)
+    public function getDepartmentsByClass()
     {
+
+        $classId = request()->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
         try {
             // ক্লাস চেক করা
             $class = SchoolClass::where('id', $classId)->where('status', 1)->first();

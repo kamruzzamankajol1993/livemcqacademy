@@ -46,4 +46,13 @@ class Book extends Model
 {
     return $this->belongsTo(Subject::class, 'subject_id');
 }
+
+public function reviews() {
+    return $this->hasMany(BookReview::class)->where('status', 1);
+}
+
+// গড় রেটিং বের করার জন্য একটি অ্যাট্রিবিউট
+public function getAverageRatingAttribute() {
+    return round($this->reviews()->avg('rating'), 1) ?: 0;
+}
 }

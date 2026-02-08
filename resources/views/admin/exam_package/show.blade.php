@@ -27,6 +27,10 @@
                                         <td><strong>{{ $package->exam_name }}</strong></td>
                                     </tr>
                                     <tr>
+    <th width="40%">Category</th>
+    <td>{{ $package->category->name_en ?? '--' }}</td>
+</tr>
+                                    <tr>
                                         <th>Class</th>
                                         <td>{{ $package->schoolClass->name_en ?? '--' }}</td>
                                     </tr>

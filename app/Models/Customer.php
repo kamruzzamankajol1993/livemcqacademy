@@ -21,6 +21,7 @@ class Customer extends Authenticatable
         'type',
         'name',
         'email',
+        'class_id',
         'phone',
         'secondary_phone',
         'password',
@@ -41,7 +42,10 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(CustomerAddress::class);
     }
-
+public function schoolClass()
+{
+    return $this->belongsTo(SchoolClass::class, 'class_id');
+}
     /**
  * Get all of the orders for the Customer.
  */

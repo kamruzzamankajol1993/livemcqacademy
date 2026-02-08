@@ -31,6 +31,7 @@ class User extends Authenticatable
         'secondary_phone',
         'address',
         'email',
+        'class_id',
         'type',
         'user_type',
         'password',
@@ -91,4 +92,14 @@ class User extends Authenticatable
     {
         return $this->activeSubscription()->exists();
     }
+
+    public function examResults()
+{
+    return $this->hasMany(ExamResult::class)->orderBy('created_at', 'desc');
+}
+
+public function schoolClass()
+{
+    return $this->belongsTo(SchoolClass::class, 'class_id');
+}
 }

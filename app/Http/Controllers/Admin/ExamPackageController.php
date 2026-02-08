@@ -10,7 +10,7 @@ use App\Models\Subject;
 use App\Models\Chapter;
 use App\Models\Topic;
 use Illuminate\Http\Request;
-
+use App\Models\ExamCategory; // Added this
 class ExamPackageController extends Controller
 {
     /**
@@ -19,7 +19,7 @@ class ExamPackageController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = ExamPackage::with(['schoolClass', 'department']);
+            $query = ExamPackage::with(['schoolClass', 'department', 'category']);
 
             // সার্চ ফিল্টার
             if ($request->filled('search')) {
@@ -47,17 +47,19 @@ class ExamPackageController extends Controller
     /**
      * ক্রিয়েট ব্লেড লোড (AJAX Modal-এর জন্য আলাদা ব্লেড)
      */
-    public function create()
+   public function create()
 {
+    $categories = ExamCategory::where('status', 1)->get(); // Added this
     $classes = SchoolClass::where('status', 1)->orderBy('serial', 'asc')->get();
-    return view('admin.exam_package.create', compact('classes'));
+    return view('admin.exam_package.create', compact('classes', 'categories'));
 }
 
 public function edit($id)
 {
     $package = ExamPackage::findOrFail($id);
+    $categories = ExamCategory::where('status', 1)->get(); // Added this
     $classes = SchoolClass::where('status', 1)->get();
-    return view('admin.exam_package.edit', compact('package', 'classes'));
+    return view('admin.exam_package.edit', compact('package', 'classes', 'categories'));
 }
 
     /**

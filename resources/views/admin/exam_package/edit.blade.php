@@ -23,6 +23,18 @@
                             @method('PUT')
                             
                             <div class="row">
+                                {{-- Category Selection --}}
+                                <div class="col-md-12 mb-3">
+    <label class="fw-bold">Exam Category <span class="text-danger">*</span></label>
+    <select name="exam_category_id" class="form-control select2" required>
+        <option value="">-- Select Category --</option>
+        @foreach($categories as $cat)
+            <option value="{{ $cat->id }}" {{ $package->exam_category_id == $cat->id ? 'selected' : '' }}>
+                {{ $cat->name_en }}
+            </option>
+        @endforeach
+    </select>
+</div>
                                 {{-- Exam Name --}}
                                 <div class="col-md-12 mb-3">
                                     <label class="fw-bold">Exam Name <span class="text-danger">*</span></label>

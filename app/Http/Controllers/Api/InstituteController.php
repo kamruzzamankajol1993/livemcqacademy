@@ -39,8 +39,9 @@ class InstituteController extends Controller
      * URL Example: /api/institutes/type/school
      * URL Example: /api/institutes/type/college
      */
-    public function getByType($type)
+    public function getByType(Request $request)
     {
+        $type = $request->type;
         try {
             // টাইপ অনুযায়ী ফিল্টার
             $institutes = Institute::where('status', 1)

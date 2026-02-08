@@ -17,80 +17,63 @@ class AuthController extends Controller
      * Customer Registration API
      */
     public function register(Request $request)
-    {
-        // 1. Validation
-        $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'phone'    => 'nullable|string|max:20|unique:users',
-            'password' => 'required|string|min:6|confirmed', // password_confirmation field required
+{
+    // ১. ভ্যালিডেশন আপডেট (class_id যুক্ত করা হয়েছে)
+    $validator = Validator::make($request->all(), [
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|string|email|max:255|unique:users',
+        'phone'    => 'nullable|string|max:20|unique:users',
+        'password' => 'required|string|min:6|confirmed',
+        'class_id' => 'required|exists:school_classes,id', // এটি যুক্ত করুন
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+    }
+
+    try {
+        DB::beginTransaction();
+
+        // ১. কাস্টমার টেবিল এ ডাটা তৈরি (class_id সহ)
+        $customer = Customer::create([
+            'name'     => $request->name,
+            'phone'    => $request->phone ?? null,
+            'email'    => $request->email,
+            'class_id' => $request->class_id, // class_id ইনসার্ট
+            'status'   => 1, 
+            'slug'     => \Illuminate\Support\Str::slug($request->name) . '-' . time(),
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        // ২. ইউজার টেবিল এ ডাটা তৈরি (class_id সহ)
+        $user = User::create([
+            'name'         => $request->name,
+            'phone'        => $request->phone ?? null,
+            'email'        => $request->email,
+            'password'     => Hash::make($request->password),
+            'viewpassword' => $request->password,
+            'customer_id'  => $customer->id,
+            'class_id'     => $request->class_id, // class_id ইনসার্ট
+            'user_type'    => 2,
+            'status'       => 1,
+        ]);
 
-        // 2. Database Transaction to ensure both Customer and User are created
-        try {
-            DB::beginTransaction();
+        $customer->update(['user_id' => $user->id]);
 
-            $validatedCustomerData = $request->all();
+        DB::commit();
 
-            // --- আপনার দেওয়া কোড লজিক শুরু ---
-            
-            // ১. কাস্টমার টেবিল এ ডাটা তৈরি
-            $customer = Customer::create([
-                'name'   => $validatedCustomerData['name'],
-                'phone'  => $validatedCustomerData['phone'] ?? null,
-                'email'  => $validatedCustomerData['email'],
-                'status' => 1, 
-                // স্লাগ বা অন্য ফিল্ড লাগলে এখানে এড করতে পারেন
-                'slug'   => \Illuminate\Support\Str::slug($validatedCustomerData['name']) . '-' . time(),
-            ]);
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-            // ২. ইউজার টেবিল এ ডাটা তৈরি (লগইন এর জন্য)
-            $user = User::create([
-                'name'         => $validatedCustomerData['name'],
-                'phone'        => $validatedCustomerData['phone'] ?? null,
-                'email'        => $validatedCustomerData['email'],
-                'password'     => Hash::make($request->password), // Always hash the password
-                'viewpassword' => $request->password,             // Store plain text as requested
-                'customer_id'  => $customer->id,                  // Link to the newly created customer
-                'user_type'    => 2,                           // Optional: to identify user type easily
-                'status'       => 1,
-            ]);
+        return response()->json([
+            'status'  => true,
+            'message' => 'Registration successful',
+            'data'    => ['user' => $user, 'token' => $token]
+        ], 201);
 
-            // --- আপনার দেওয়া কোড লজিক শেষ ---
-
-            $customer->update([
-                'user_id' => $user->id
-            ]);
-
-            DB::commit();
-
-            // 3. Create Token
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Registration successful',
-                'data'    => [
-                    'user'  => $user,
-                    'token' => $token
-                ]
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status'  => false,
-                'message' => 'Registration failed: ' . $e->getMessage()
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['status' => false, 'message' => 'Registration failed: ' . $e->getMessage()], 500);
     }
+}
 
     /**
      * Customer Login API

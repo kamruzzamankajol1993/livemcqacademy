@@ -21,7 +21,7 @@ return new class extends Migration
             
             $table->dateTime('start_date');
             $table->dateTime('end_date'); // কবে মেয়াদ শেষ হবে
-            
+            $table->string('remaining_exam_limit')->nullable();
             // active = বর্তমানে চলছে, expired = মেয়াদ শেষ
             $table->enum('status', ['active', 'expired'])->default('active');
             $table->timestamps();

@@ -10,6 +10,7 @@ class ExamPackage extends Model
     use HasFactory;
 
     protected $fillable = [
+        'exam_category_id',
         'class_id', 
         'class_department_id', 
         'subject_ids', 
@@ -66,4 +67,9 @@ class ExamPackage extends Model
     {
         return Topic::whereIn('id', $this->topic_ids ?? [])->get();
     }
+
+    public function category()
+{
+    return $this->belongsTo(ExamCategory::class, 'exam_category_id');
+}
 }
