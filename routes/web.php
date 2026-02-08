@@ -94,6 +94,33 @@ Route::controller(AuthController::class)->group(function () {
 Route::group(['middleware' => ['auth']], function() {
 
 
+
+Route::get('admin/reports/student-info', [App\Http\Controllers\Admin\ReportController::class, 'studentInfo'])->name('reports.studentInfo');
+
+Route::get('admin/reports/package-enrollment', [App\Http\Controllers\Admin\ReportController::class, 'packageEnrollment'])->name('reports.packageEnrollment');
+Route::get('admin/reports/package-payments', [App\Http\Controllers\Admin\ReportController::class, 'packagePayments'])->name('reports.packagePayments');
+
+Route::get('admin/reports/exam-enrollment', [App\Http\Controllers\Admin\ReportController::class, 'examEnrollment'])->name('reports.exams');
+Route::get('admin/reports/exam-payments', [App\Http\Controllers\Admin\ReportController::class, 'examPayments'])->name('reports.examPayments');
+Route::get('admin/reports/book-payments', [App\Http\Controllers\Admin\ReportController::class, 'bookPayments'])->name('reports.bookPayments');
+
+// পেমেন্ট ইন্সট্রাকশন এবং নম্বর লিস্ট পাওয়ার এপিআই
+
+
+Route::get('payment-method-settings', [App\Http\Controllers\Admin\PaymentSettingController::class, 'index'])->name('admin.paymentSettings');
+Route::post('payment-method-settings/store', [App\Http\Controllers\Admin\PaymentSettingController::class, 'store'])->name('admin.paymentSettingsStore');
+Route::post('payment-method-settings/update', [App\Http\Controllers\Admin\PaymentSettingController::class, 'update'])->name('admin.paymentSettingsUpdate');
+Route::delete('payment-method-settings/delete/{id}', [App\Http\Controllers\Admin\PaymentSettingController::class, 'destroy'])->name('admin.paymentSettingsDelete');
+
+// Book Payments Routes
+Route::get('book-payments', [App\Http\Controllers\Admin\PaymentManagementController::class, 'bookPayments'])->name('admin.bookPayments');
+Route::post('book-payments/update-status/{id}', [App\Http\Controllers\Admin\PaymentManagementController::class, 'updateBookPaymentStatus'])->name('admin.updateBookPaymentStatus');
+
+// Exam Payments Routes
+Route::get('exam-payments', [App\Http\Controllers\Admin\PaymentManagementController::class, 'examPayments'])->name('admin.examPayments');
+Route::post('exam-payments/update-status/{id}', [App\Http\Controllers\Admin\PaymentManagementController::class, 'updateExamPaymentStatus'])->name('admin.updateExamPaymentStatus');
+
+
 Route::resource('book', BookController::class);
 
     // ২. AJAX Data Fetch Route (ইনডেক্স টেবিলের ডাটা প্যাগিনেশন ও সার্চের জন্য)
@@ -113,6 +140,10 @@ Route::get('get-subjects-by-class', [BookController::class, 'getSubjectsByClass'
 
 // Exam Package Resource Route
     Route::resource('exam-package', ExamPackageController::class);
+// Exam Package Leaderboard Route
+Route::get('exam-package-leaderboard/{id}', [App\Http\Controllers\Admin\ExamPackageController::class, 'viewLeaderboard'])->name('exam-package.leaderboard');
+
+Route::get('student-report/{id}', [App\Http\Controllers\Admin\CustomerController::class, 'studentReport'])->name('students.report');
 
     // AJAX Dependency Routes
     Route::get('exam-package/get-departments/{class_id}', [ExamPackageController::class, 'getDepartments'])->name('exam-package.get-departments');

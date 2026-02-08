@@ -18,106 +18,116 @@ class SubscriptionController extends Controller
      * অ্যাপ থেকে প্যাকেজ কেনার এপিআই
      */
     public function purchasePackage(Request $request)
-    {
-        // ১. ভ্যালিডেশন
-        $request->validate([
-            'package_id'     => 'required|exists:packages,id',
-            'amount'         => 'required|numeric',
-            'payment_method' => 'required|in:Bkash,Nagad,Rocket,Bank,Card', // স্ট্যাটিক পেমেন্ট মেথড লিস্ট
-            'trx_id'         => 'required|unique:payments,trx_id',
+{
+    // ১. ভ্যালিডেশন
+    $request->validate([
+        'package_id'     => 'required|exists:packages,id',
+        'amount'         => 'required|numeric',
+        'payment_method' => 'required|in:Bkash,Nagad,Rocket,Bank,Card',
+        'trx_id'         => 'required|unique:payments,trx_id',
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        $user = $request->user();
+        $package = Package::with('features')->findOrFail($request->package_id); // রিলেশনসহ লোড
+        $now = Carbon::now('Asia/Dhaka');
+        $durationDays = ($package->type == 'yearly') ? 365 : 30;
+
+        // --- নতুন লিমিট সংগ্রহ (Exam & Book) ---
+        $examFeature = $package->features->where('code', 'paid_exam_package')->first();
+        $examLimitDefault = $examFeature ? $examFeature->pivot->value : '0';
+
+        $bookFeature = $package->features->where('code', 'download_pdf_book_mcq')->first();
+        $bookLimitDefault = $bookFeature ? $bookFeature->pivot->value : '0';
+
+        // ২. পেমেন্ট রেকর্ড তৈরি
+        $payment = Payment::create([
+            'user_id'         => $user->id,
+            'package_id'      => $package->id,
+            'trx_id'          => $request->trx_id,
+            'amount'          => $request->amount,
+            'payment_method'  => $request->payment_method,
+            'transaction_id'  => $request->trx_id,
+            'status'          => 'success',
+            'payment_details' => ['source' => 'Mobile App', 'timezone' => 'BST']
         ]);
 
-        try {
-            DB::beginTransaction();
+        // ৩. বর্তমান একটিভ সাবস্ক্রিপশন চেক
+        $activeSub = UserSubscription::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->where('end_date', '>', $now)
+            ->first();
 
-            $user = $request->user(); // লগইন করা ইউজার
-            $package = Package::findOrFail($request->package_id);
-            $now = Carbon::now('Asia/Dhaka'); // বাংলাদেশ স্ট্যান্ডার্ড টাইম
-            $durationDays = ($package->type == 'yearly') ? 365 : 30;
-$limitFeature = $package->features->where('code', 'paid_exam_package')->first();
-        $defaultLimit = $limitFeature ? $limitFeature->pivot->value : '0';
-            // ২. পেমেন্ট রেকর্ড তৈরি
-            $payment = Payment::create([
-                'user_id'         => $user->id,
-                'package_id'      => $package->id,
-                'trx_id'          => $request->trx_id,
-                'amount'          => $request->amount,
-                'payment_method'  => $request->payment_method,
-                'transaction_id'  => $request->trx_id, // আপনার মাইগ্রেশন অনুযায়ী
-                'status'          => 'success',        // সরাসরি পেমেন্ট গেটওয়ে থেকে আসলে success হবে
-                'payment_details' => ['source' => 'Mobile App', 'timezone' => 'BST']
-            ]);
+        if ($activeSub) {
+            if ($activeSub->package_id == $package->id) {
+                // --- রিনিউ লজিক (একই প্যাকেজ) ---
+                $newEndDate = Carbon::parse($activeSub->end_date, 'Asia/Dhaka')->addDays($durationDays);
 
-            // ৩. বর্তমান একটিভ সাবস্ক্রিপশন চেক
-            $activeSub = UserSubscription::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->where('end_date', '>', $now)
-                ->first();
+                // এক্সাম লিমিট ক্যালকুলেশন (Unlimited কন্ডিশনসহ)
+                $newExamLimit = (strtolower($examLimitDefault) == 'unlimited' || strtolower($activeSub->remaining_exam_limit) == 'unlimited') 
+                            ? 'Unlimited' 
+                            : (int)$activeSub->remaining_exam_limit + (int)$examLimitDefault;
 
-            if ($activeSub) {
-                if ($activeSub->package_id == $package->id) {
+                // বুক লিমিট ক্যালকুলেশন (Unlimited কন্ডিশনসহ)
+                $newBookLimit = (strtolower($bookLimitDefault) == 'unlimited' || strtolower($activeSub->remaining_book_limit) == 'unlimited') 
+                            ? 'Unlimited' 
+                            : (int)$activeSub->remaining_book_limit + (int)$bookLimitDefault;
 
-                // রিনিউ করলে নতুন লিমিট আগেরটার সাথে যোগ হবে (যদি আনলিমিটেড না হয়)
-            $newEndDate = Carbon::parse($activeSub->end_date)->addDays($durationDays);
-            $newLimit = (strtolower($defaultLimit) == 'unlimited' || strtolower($activeSub->remaining_exam_limit) == 'unlimited') 
-                        ? 'Unlimited' 
-                        : (int)$activeSub->remaining_exam_limit + (int)$defaultLimit;
-
-                    // লজিক ১: Renew (একই প্যাকেজ হলে বর্তমান মেয়াদের সাথে নতুন মেয়াদ যোগ হবে)
-                    $newEndDate = Carbon::parse($activeSub->end_date, 'Asia/Dhaka')->addDays($durationDays);
-                    
-                    $activeSub->update([
-                        'end_date'   => $newEndDate,
-                        'remaining_exam_limit' => $newLimit,
-                        'payment_id' => $payment->id
-                    ]);
-                    $message = "Package renewed successfully. New expire date: " . $newEndDate->format('d M, Y');
-                } else {
-                    // লজিক ২: Switch (ভিন্ন প্যাকেজ হলে আগেরটি Expired করে নতুনটি শুরু হবে)
-                    $activeSub->update(['status' => 'expired']);
-                    
-                    $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $defaultLimit);
-                    $message = "Switched to " . $package->name . " successfully.";
-                }
+                $activeSub->update([
+                    'end_date'             => $newEndDate,
+                    'remaining_exam_limit' => $newExamLimit,
+                    'remaining_book_limit' => $newBookLimit, // বুক লিমিট আপডেট
+                    'payment_id'           => $payment->id
+                ]);
+                $message = "Package renewed successfully. New expire date: " . $newEndDate->format('d M, Y');
             } else {
-                // কোনো একটিভ প্যাকেজ না থাকলে নতুন সাবস্ক্রিপশন
-                $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $defaultLimit);
-                $message = "Package purchased successfully.";
+                // --- সুইচ লজিক (ভিন্ন প্যাকেজ) ---
+                $activeSub->update(['status' => 'expired']);
+                $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $examLimitDefault, $bookLimitDefault);
+                $message = "Switched to " . $package->name . " successfully.";
             }
-
-            DB::commit();
-
-            return response()->json([
-                'status'  => true,
-                'message' => $message,
-                'data'    => $user->load('activeSubscription.package')
-            ], 200);
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error("App Purchase Failed: " . $e->getMessage());
-            return response()->json([
-                'status'  => false,
-                'message' => 'Transaction failed: ' . $e->getMessage()
-            ], 500);
+        } else {
+            // --- নতুন সাবস্ক্রিপশন ---
+            $this->createNewSub($user->id, $package->id, $payment->id, $now, $durationDays, $examLimitDefault, $bookLimitDefault);
+            $message = "Package purchased successfully.";
         }
+
+        DB::commit();
+
+        return response()->json([
+            'status'  => true,
+            'message' => $message,
+            'data'    => $user->load('activeSubscription.package')
+        ], 200);
+
+    } catch (Exception $e) {
+        DB::rollBack();
+        Log::error("App Purchase Failed: " . $e->getMessage());
+        return response()->json([
+            'status'  => false,
+            'message' => 'Transaction failed: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * হেল্পার মেথড: নতুন সাবস্ক্রিপশন এন্ট্রি
      */
-    private function createNewSub($userId, $packageId, $paymentId, $now, $days, $defaultLimit)
-    {
-        return UserSubscription::create([
-            'user_id'    => $userId,
-            'package_id' => $packageId,
-            'payment_id' => $paymentId,
-            'start_date' => $now,
-            'end_date'   => $now->copy()->addDays($days),
-            'remaining_exam_limit' => $defaultLimit,
-            'status'     => 'active'
-        ]);
-    }
+    private function createNewSub($userId, $packageId, $paymentId, $now, $days, $examLimit, $bookLimit)
+{
+    return UserSubscription::create([
+        'user_id'              => $userId,
+        'package_id'           => $packageId,
+        'payment_id'           => $paymentId,
+        'start_date'           => $now,
+        'end_date'             => $now->copy()->addDays($days),
+        'remaining_exam_limit' => $examLimit,
+        'remaining_book_limit' => $bookLimit, // নতুন কলাম
+        'status'               => 'active'
+    ]);
+}
 
     public function paymentMethods()
 {
@@ -152,6 +162,39 @@ $limitFeature = $package->features->where('code', 'paid_exam_package')->first();
         'message' => 'Payment methods retrieved successfully',
         'data' => $methods
     ], 200);
+}
+
+/**
+ * অ্যাপের জন্য ডাইনামিক পেমেন্ট মেথড এবং ইন্সট্রাকশন লিস্ট
+ */
+public function paymentMethodsins()
+{
+    try {
+        $methods = DB::table('payment_settings')
+            ->where('status', 1)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Payment methods retrieved successfully',
+            'data' => $methods->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'provider' => ucfirst($item->provider),
+                    'number' => $item->number,
+                    'type' => $item->type,
+                    'instruction' => $item->instruction,
+                    'logo' => asset('public/assets/images/payment/' . strtolower($item->provider) . '.png')
+                ];
+            })
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to load instructions: ' . $e->getMessage()
+        ], 500);
+    }
 }
 
 

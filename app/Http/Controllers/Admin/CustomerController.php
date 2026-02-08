@@ -153,17 +153,18 @@ class CustomerController extends Controller
     }
 
     // অ্যাডমিন থেকে প্যাকেজ অ্যাসাইন বা পেমেন্ট এন্ট্রি
-   /**
+  /**
  * Admin can assign or renew a package for a customer.
  * Logic: Renew if same package, Switch if different.
+ * Handles 'unlimited' limits for exams and books.
  */
 public function assignPackage(Request $request, $id)
 {
-    // Validation based on your requirements
+    // ১. ভ্যালিডেশন
     $request->validate([
         'package_id' => 'required|exists:packages,id',
         'amount' => 'required|numeric',
-        'payment_method' => 'required' // Keeping payment_method as requested
+        'payment_method' => 'required'
     ]);
 
     try {
@@ -171,18 +172,23 @@ public function assignPackage(Request $request, $id)
 
         $customer = Customer::findOrFail($id);
         $user = User::findOrFail($customer->user_id);
-        $package = Package::findOrFail($request->package_id);
+        $package = Package::with('features')->findOrFail($request->package_id);
         
-        // Set Timezone to Bangladesh Standard Time (BST)
+        // বর্তমান সময় এবং প্যাকেজ অনুযায়ী মেয়াদ নির্ধারণ (BST Time)
         $now = Carbon::now('Asia/Dhaka'); 
         $durationDays = ($package->type == 'yearly') ? 365 : 30;
 
-        // 1. Create Payment Record
+        // ২. ফিচার লিস্ট থেকে প্যাকেজের লিমিটগুলো সংগ্রহ করা
+        // কোডগুলো আপনার feature_lists টেবিলের 'code' কলামের সাথে মিল থাকতে হবে
+        $examLimit = $package->features->where('code', 'paid_exam_package')->first()->pivot->value ?? 0;
+        $bookLimit = $package->features->where('code', 'download_pdf_book_mcq')->first()->pivot->value ?? 0;
+
+        // ৩. পেমেন্ট রেকর্ড তৈরি করা
         $payment = Payment::create([
             'user_id' => $user->id,
             'package_id' => $package->id,
             'amount' => $request->amount,
-            'payment_method' => $request->payment_method, // DB Column: payment_method
+            'payment_method' => $request->payment_method,
             'status' => 'success',
             'trx_id' => 'ADMIN-'.time(),
             'payment_details' => [
@@ -191,7 +197,7 @@ public function assignPackage(Request $request, $id)
             ]
         ]);
 
-        // 2. Check for an active subscription
+        // ৪. একটিভ সাবস্ক্রিপশন চেক করা
         $activeSub = UserSubscription::where('user_id', $user->id)
             ->where('status', 'active')
             ->where('end_date', '>', $now)
@@ -199,32 +205,45 @@ public function assignPackage(Request $request, $id)
 
         if ($activeSub) {
             if ($activeSub->package_id == $package->id) {
-                // LOGIC 1: RENEW (Same Package)
-                // Add new duration to the existing expire date
+                // --- LOGIC 1: RENEW (একই প্যাকেজ) ---
+                
+                // এক্সাম লিমিট ক্যালকুলেশন (unlimited হলে যোগ করার প্রয়োজন নেই)
+                if (strtolower($activeSub->remaining_exam_limit) == 'unlimited' || strtolower($examLimit) == 'unlimited') {
+                    $finalExamLimit = 'unlimited';
+                } else {
+                    $finalExamLimit = (int)$activeSub->remaining_exam_limit + (int)$examLimit;
+                }
+
+                // বুক লিমিট ক্যালকুলেশন (unlimited হলে যোগ করার প্রয়োজন নেই)
+                if (strtolower($activeSub->remaining_book_limit) == 'unlimited' || strtolower($bookLimit) == 'unlimited') {
+                    $finalBookLimit = 'unlimited';
+                } else {
+                    $finalBookLimit = (int)$activeSub->remaining_book_limit + (int)$bookLimit;
+                }
+
+                // মেয়াদ বৃদ্ধি এবং লিমিট আপডেট
                 $newEndDate = Carbon::parse($activeSub->end_date, 'Asia/Dhaka')->addDays($durationDays);
                 
                 $activeSub->update([
                     'end_date' => $newEndDate,
-                    'payment_id' => $payment->id // Link to latest payment
+                    'payment_id' => $payment->id,
+                    'remaining_exam_limit' => $finalExamLimit,
+                    'remaining_book_limit' => $finalBookLimit,
                 ]);
                 
-                Log::info("Package Renewed for User: " . $user->id);
             } else {
-                // LOGIC 2: SWITCH/UPGRADE (Different Package)
-                // Expire the old one and start a fresh one immediately
+                // --- LOGIC 2: SWITCH/UPGRADE (ভিন্ন প্যাকেজ) ---
+                // আগের প্যাকেজ এক্সপায়ার করে দিয়ে নতুন লিমিট দিয়ে ফ্রেশ সাবস্ক্রিপশন শুরু হবে
                 $activeSub->update(['status' => 'expired']);
-                
-                $this->createNewSubscription($user->id, $package->id, $payment->id, $now, $durationDays);
-                
-                Log::info("Package Switched for User: " . $user->id);
+                $this->createNewSubscription($user->id, $package->id, $payment->id, $now, $durationDays, $examLimit, $bookLimit);
             }
         } else {
-            // No active plan, create new
-            $this->createNewSubscription($user->id, $package->id, $payment->id, $now, $durationDays);
+            // --- LOGIC 3: NEW SUBSCRIPTION (আগে কোনো প্ল্যান নেই) ---
+            $this->createNewSubscription($user->id, $package->id, $payment->id, $now, $durationDays, $examLimit, $bookLimit);
         }
 
         DB::commit();
-        return redirect()->back()->with('success', 'Package assigned successfully in BST Time!');
+        return redirect()->back()->with('success', 'Package assigned successfully with proper limits!');
 
     } catch (Exception $e) {
         DB::rollBack();
@@ -234,17 +253,18 @@ public function assignPackage(Request $request, $id)
 }
 
 /**
- * Helper function to create a new active subscription.
+ * Helper function updated to store initial limits.
  */
-private function createNewSubscription($userId, $packageId, $paymentId, $now, $days)
+private function createNewSubscription($userId, $packageId, $paymentId, $now, $days, $examLimit, $bookLimit)
 {
-    // Create new entry with BST time
     return UserSubscription::create([
         'user_id' => $userId,
         'package_id' => $packageId,
         'payment_id' => $paymentId,
         'start_date' => $now,
         'end_date' => $now->copy()->addDays($days),
+        'remaining_exam_limit' => $examLimit, //
+        'remaining_book_limit' => $bookLimit, //
         'status' => 'active'
     ]);
 }
@@ -322,4 +342,46 @@ public function update(Request $request, $id)
             return redirect()->route('student.index')->with('error', 'Failed to delete customer.');
         }
     }
+
+    public function studentReport(Request $request, $id)
+{
+    $student = User::findOrFail($id);
+
+    if ($request->ajax()) {
+        // ১. এক্সাম রেজাল্ট
+        if ($request->type == 'exam') {
+            $data = \App\Models\ExamResult::with('examPackage')
+                ->where('user_id', $id)
+                ->latest()
+                ->paginate(10);
+        } 
+        // ২. সেলফ টেস্ট রেজাল্ট
+        elseif ($request->type == 'self') {
+            $data = \App\Models\SelfTest::where('user_id', $id)
+                ->latest()
+                ->paginate(10);
+        }
+        // ৩. কেনা বইয়ের তালিকা (বুক পেমেন্ট টেবিল থেকে)
+        else {
+            $data = DB::table('book_payments')
+                ->join('books', 'book_payments.book_id', '=', 'books.id')
+                ->where('book_payments.user_id', $id)
+                ->where('book_payments.status', 'completed')
+                ->select('book_payments.*', 'books.title as book_title', 'books.image as book_image')
+                ->latest('book_payments.created_at')
+                ->paginate(10);
+        }
+
+        return response()->json([
+            'data'         => $data->items(),
+            'total'        => $data->total(),
+            'current_page' => $data->currentPage(),
+            'last_page'    => $data->lastPage(),
+            'from'         => $data->firstItem(),
+            'to'           => $data->lastItem(),
+        ]);
+    }
+
+    return view('admin.customer.report', compact('student'));
+}
 }

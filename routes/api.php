@@ -36,7 +36,7 @@ Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword']);
 // Protected Routes (Login required)
 Route::middleware('auth:sanctum')->group(function () {
 
-
+Route::get('/payment-instructions', [App\Http\Controllers\Api\SubscriptionController::class, 'paymentMethodsins']);
 // start book routes
 Route::get('/book_questions', [BookController::class, 'getQuestionsByFilter']);
 Route::post('/book_review_submit', [BookController::class, 'submitReview']);

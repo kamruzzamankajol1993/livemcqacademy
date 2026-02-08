@@ -82,7 +82,8 @@
             fetch: "{{ route('exam-package.index') }}",
             edit: "{{ route('exam-package.edit', ':id') }}",
              show: "{{ route('exam-package.show', ':id') }}",
-            destroy: "{{ route('exam-package.destroy', ':id') }}"
+            destroy: "{{ route('exam-package.destroy', ':id') }}",
+           leaderboard: "{{ route('exam-package.leaderboard', ':id') }}"
         };
 
         // --- 1. Fetch List Data ---
@@ -103,6 +104,7 @@
                         // এডিট লিঙ্কের জন্য ডাইনামিক ইউআরএল জেনারেট করা
                         let editUrl = routes.edit.replace(':id', item.id);
 let showUrl = routes.show.replace(':id', item.id);
+let leaderUrl = routes.leaderboard.replace(':id', item.id);
                         rows += `<tr>
                             <td>${sl}</td>
                             <td>
@@ -116,6 +118,10 @@ let showUrl = routes.show.replace(':id', item.id);
                             <td>${statusBadge}</td>
                             <td>
         <div class="d-flex gap-1">
+
+            <a href="${leaderUrl}" class="btn btn-sm btn-info text-white" title="Leaderboard">
+                                <i class="fa fa-trophy"></i>
+                            </a>
             {{-- Show Button --}}
             <a href="${showUrl}" class="btn btn-sm btn-warning text-white" title="Show Details">
                 <i class="fa fa-eye"></i>

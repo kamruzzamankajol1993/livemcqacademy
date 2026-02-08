@@ -162,4 +162,37 @@ public function show($id)
                        ->get();
         return response()->json($topics);
     }
+
+    public function viewLeaderboard(Request $request, $id)
+{
+    $package = ExamPackage::findOrFail($id);
+
+    // যদি AJAX রিকোয়েস্ট হয় (টেবিল লোড করার জন্য)
+    if ($request->ajax()) {
+        $query = \App\Models\ExamResult::with('user:id,name,phone')
+                    ->where('exam_package_id', $id);
+
+        // সার্চ ফিল্টার
+        if ($request->filled('search')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // কাস্টম প্যাগিনেশন রেসপন্স
+        $data = $query->orderBy('earned_marks', 'desc')->paginate(15);
+
+        return response()->json([
+            'data'         => $data->items(),
+            'total'        => $data->total(),
+            'current_page' => $data->currentPage(),
+            'last_page'    => $data->lastPage(),
+            'from'         => $data->firstItem(),
+            'to'           => $data->lastItem(),
+        ]);
+    }
+
+    return view('admin.exam_package.leaderboard', compact('package'));
+}
 }

@@ -1,6 +1,41 @@
 @extends('admin.master.master')
 @section('title') Student Management @endsection
 
+@section('css')
+<style>
+    /* টেবিল বাটন ডিজাইন */
+    .action-btns .btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px; /* আপনি চাইলে ৫০% করে সার্কেল করতে পারেন */
+        transition: all 0.3s ease;
+        border: none;
+        margin-right: 2px;
+    }
+
+    /* হোভার ইফেক্ট */
+    .action-btns .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    /* আলাদা আলাদা কালার ভেরিয়েশন */
+    .btn-report { background-color: #4e73df; color: white; } /* রিপোর্ট */
+    .btn-view   { background-color: #1cc88a; color: white; } /* ভিউ */
+    .btn-edit   { background-color: #f6c23e; color: white; } /* এডিট */
+    .btn-delete { background-color: #e74a3b; color: white; } /* ডিলিট */
+    
+    /* আইকন সাইজ */
+    .action-btns .btn i {
+        font-size: 13px;
+    }
+</style>
+@endsection
+
 @section('body')
 <main class="main-content">
     <div class="container-fluid">
@@ -77,6 +112,8 @@
                         let showUrl = "{{ route('student.show', ':id') }}".replace(':id', item.id);
                         let editUrl = "{{ route('student.edit', ':id') }}".replace(':id', item.id);
                         let deleteUrl = "{{ route('student.destroy', ':id') }}".replace(':id', item.id);
+let reportUrl = "{{ route('students.report', ':id') }}".replace(':id', item.user_id);
+
 
                         rows += `<tr>
                             <td>${sl}</td>
@@ -84,16 +121,28 @@
                             <td>${item.email}<br><small class="text-muted">${item.phone}</small></td>
                             <td>${pkgName}</td>
                             <td>${status}</td>
-                            <td>
-                                <div class="d-flex gap-1">
-                                    <a href="${showUrl}" class="btn btn-sm btn-primary" title="View Profile"><i class="fa fa-eye"></i></a>
-                                    <a href="${editUrl}" class="btn btn-sm btn-info text-white" title="Edit"><i class="fa fa-edit"></i></a>
-                                    <form action="${deleteUrl}" method="POST" id="delete-form-${item.id}">
-                                        @csrf @method('DELETE')
-                                        <button type="button" onclick="deleteConfirm(${item.id})" class="btn btn-sm btn-danger" title="Delete"><i class="fa fa-trash"></i></button>
-                                    </form>
-                                </div>
-                            </td>
+                           <td class="action-btns">
+        <div class="d-flex justify-content-center">
+            <a href="${reportUrl}" class="btn btn-report" title="Performance Report">
+                <i class="fa fa-chart-line"></i>
+            </a>
+
+            <a href="${showUrl}" class="btn btn-view" title="View Profile">
+                <i class="fa fa-eye"></i>
+            </a>
+
+            <a href="${editUrl}" class="btn btn-edit" title="Edit">
+                <i class="fa fa-edit"></i>
+            </a>
+            
+            <form action="${deleteUrl}" method="POST" id="delete-form-${item.id}" class="d-inline">
+                @csrf @method('DELETE')
+                <button type="button" onclick="deleteConfirm(${item.id})" class="btn btn-delete" title="Delete">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </form>
+        </div>
+    </td>
                         </tr>`;
                     });
                 } else {

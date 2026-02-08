@@ -25,7 +25,7 @@ class SelfTestController extends Controller
             'classes' => SchoolClass::where('status', 1)->get(['id', 'name_en', 'name_bn']),
             'subjects' => Subject::where('status', 1)->get(['id', 'name_en', 'name_bn']),
             // রেফারেন্সের জন্য এক্সাম টেবিল থেকে সেলফ টেস্ট ক্যাটাগরির ডিফল্ট লিমিট (ঐচ্ছিক)
-            'default_setup' => Exam::where('status', 1)->first(['total_questions', 'time_duration', 'per_question_mark'])
+            'default_setup' => Exam::where('status', 1)->first(['total_questions', 'time_duration','pass_mark', 'per_question_mark'])
         ];
 
         return response()->json([

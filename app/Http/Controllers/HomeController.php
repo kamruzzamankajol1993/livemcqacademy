@@ -7,7 +7,7 @@ use App\Models\McqQuestion;
 use App\Models\Subject;
 use App\Models\SchoolClass;
 use App\Models\Institute;
-use App\Models\Book; // নতুন যুক্ত হয়েছে
+use App\Models\Book; 
 use App\Models\Customer;
 use App\Models\UserSubscription;
 use App\Models\Payment;
@@ -24,7 +24,6 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $filter = $request->get('filter', 'this_month');
-        // এশিয়া/ঢাকা টাইমজোন সেট করা
         $now = Carbon::now('Asia/Dhaka');
 
         // --- 1. Summary Counts & Metrics ---
@@ -32,13 +31,16 @@ class HomeController extends Controller
         $totalSubjects = Subject::count();
         $totalClasses = SchoolClass::count();
         $totalInstitutes = Institute::count();
-        $totalBooks = Book::count(); // বুক মডিউলের ডাটা
+        $totalBooks = Book::count();
         
         $totalCustomers = Customer::count();
         $activeSubscriptions = UserSubscription::where('status', 'active')
                                 ->where('end_date', '>', $now)
                                 ->count();
         $totalEarnings = Payment::where('status', 'success')->sum('amount');
+
+        // --- NEW: New Registered Students (Last 7 Days) ---
+        $newStudentsCount = Customer::where('created_at', '>=', $now->copy()->subDays(7))->count();
 
         // --- 2. Filter Logic for "New Questions" Card ---
         $newQuestionsQuery = McqQuestion::query();
@@ -87,6 +89,14 @@ class HomeController extends Controller
             $subjectChartData[] = [$row->name_en, (int)$row->total];
         }
 
+        // --- NEW: Top Selling Packages ---
+        $topPackages = UserSubscription::join('packages', 'user_subscriptions.package_id', '=', 'packages.id')
+            ->select('packages.name', DB::raw('count(*) as total'))
+            ->groupBy('packages.name')
+            ->orderBy('total', 'DESC')
+            ->take(5)
+            ->get();
+
         // --- 5. Upcoming Expiring Subscriptions (Next 7 Days) ---
         $expiringSoon = UserSubscription::with(['user.customer', 'package'])
             ->where('status', 'active')
@@ -103,7 +113,14 @@ class HomeController extends Controller
         $recentBooks = Book::with(['category', 'subject'])
                         ->latest()
                         ->take(6)
-                        ->get(); // নতুন বুক ডাটা
+                        ->get();
+
+        // --- NEW: Recent Successful Payments ---
+        $recentPayments = Payment::with(['user', 'package'])
+            ->where('status', 'success')
+            ->latest()
+            ->take(5)
+            ->get();
 
         // --- 7. Top Classes (Most Questions) ---
         $topClasses = McqQuestion::join('school_classes', 'mcq_questions.class_id', '=', 'school_classes.id')
@@ -114,22 +131,11 @@ class HomeController extends Controller
             ->get();
 
         return view('admin.dashboard.index', compact(
-            'totalCustomers',
-            'activeSubscriptions',
-            'totalMcq',
-            'totalEarnings',
-            'expiringSoon',
-            'totalSubjects',
-            'totalClasses',
-            'totalInstitutes',
-            'totalBooks',
-            'newQuestionsCount',
-            'mcqChartData',
-            'subjectChartData',
-            'recentMcqs',
-            'recentBooks',
-            'topClasses',
-            'filter'
+            'totalCustomers', 'activeSubscriptions', 'totalMcq', 'totalEarnings',
+            'expiringSoon', 'totalSubjects', 'totalClasses', 'totalInstitutes',
+            'totalBooks', 'newQuestionsCount', 'mcqChartData', 'subjectChartData',
+            'recentMcqs', 'recentBooks', 'topClasses', 'filter', 
+            'newStudentsCount', 'topPackages', 'recentPayments'
         ));
     }
 }

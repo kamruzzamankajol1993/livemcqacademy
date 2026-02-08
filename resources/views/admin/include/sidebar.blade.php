@@ -328,7 +328,107 @@
             </ul>
         </li>
         @endif
+          @if ($usr->can('paymentView') || $usr->can('paymentAdd') || $usr->can('paymentUpdate') || $usr->can('paymentDelete'))
+{{-- পেমেন্ট ম্যানেজমেন্ট সেকশন --}}
+<li class="sidebar-title">
+    <span>Payment Management</span>
+</li>
 
+<li class="nav-item">
+    <a class="nav-link collapsed" href="#paymentMenu" data-bs-toggle="collapse" role="button" 
+       aria-expanded="{{ Route::is('admin.bookPayments') || Route::is('admin.examPayments') || Route::is('admin.paymentSettings') ? 'true' : 'false' }}">
+        <i data-feather="dollar-sign"></i>
+        <span>Manual Payments</span>
+        <i data-feather="chevron-down" class="ms-auto"></i>
+    </a>
+    <ul class="collapse list-unstyled {{ Route::is('admin.bookPayments') || Route::is('admin.examPayments') || Route::is('admin.paymentSettings') ? 'show' : '' }}" id="paymentMenu">
+        
+        {{-- বুক পেমেন্ট লিস্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('admin.bookPayments') ? 'active' : '' }}" href="{{ route('admin.bookPayments') }}">
+                <i class="fa fa-book me-2" style="font-size: 10px;"></i> Book Payments
+            </a>
+        </li>
+
+        {{-- এক্সাম পেমেন্ট লিস্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('admin.examPayments') ? 'active' : '' }}" href="{{ route('admin.examPayments') }}">
+                <i class="fa fa-edit me-2" style="font-size: 10px;"></i> Exam Payments
+            </a>
+        </li>
+
+        {{-- পেমেন্ট মেথড সেটিংস (নম্বর ও ইন্সট্রাকশন) --}}
+        <li>
+            <a class="nav-link {{ Route::is('admin.paymentSettings') ? 'active' : '' }}" href="{{ route('admin.paymentSettings') }}">
+                <i class="fa fa-cogs me-2" style="font-size: 10px;"></i> Payment Settings
+            </a>
+        </li>
+    </ul>
+</li>
+@endif
+
+        @if ($usr->can('reportView') || $usr->can('reportAdd') || $usr->can('reportUpdate') || $usr->can('reportDelete'))
+        {{-- PAYMENT HISTORY --}}
+
+
+{{-- REPORT CENTER SECTION --}}
+<li class="sidebar-title">
+    <span>Report Center</span>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link collapsed" href="#reportMenu" data-bs-toggle="collapse" role="button" 
+       aria-expanded="{{ Request::is('admin/reports/*') ? 'true' : 'false' }}">
+        <i data-feather="bar-chart-2"></i>
+        <span>Reports</span>
+        <i data-feather="chevron-down" class="ms-auto"></i>
+    </a>
+    <ul class="collapse list-unstyled {{ Request::is('admin/reports/*') ? 'show' : '' }}" id="reportMenu" data-bs-parent="#sidebar-menu">
+        
+        {{-- ১. এক্সাম এনরোলমেন্ট রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.exams') ? 'active' : '' }}" href="{{ route('reports.exams') }}">
+                <i class="fa fa-graduation-cap me-2" style="font-size: 10px;"></i> Exam Enrollments
+            </a>
+        </li>
+
+        {{-- ২. এক্সাম পেমেন্ট রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.examPayments') ? 'active' : '' }}" href="{{ route('reports.examPayments') }}">
+                <i class="fa fa-credit-card me-2" style="font-size: 10px;"></i> Exam Payments
+            </a>
+        </li>
+
+        {{-- ৩. বুক পেমেন্ট রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.bookPayments') ? 'active' : '' }}" href="{{ route('reports.bookPayments') }}">
+                <i class="fa fa-book me-2" style="font-size: 10px;"></i> Book Payments
+            </a>
+        </li>
+
+        {{-- ৪. প্যাকেজ এনরোলমেন্ট রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.packageEnrollment') ? 'active' : '' }}" href="{{ route('reports.packageEnrollment') }}">
+                <i class="fa fa-archive me-2" style="font-size: 10px;"></i> Package Enrollments
+            </a>
+        </li>
+
+        {{-- ৫. প্যাকেজ পেমেন্ট রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.packagePayments') ? 'active' : '' }}" href="{{ route('reports.packagePayments') }}">
+                <i class="fa fa-money-bill-wave me-2" style="font-size: 10px;"></i> Package Payments
+            </a>
+        </li>
+
+        {{-- ৬. স্টুডেন্ট ইনফো রিপোর্ট --}}
+        <li>
+            <a class="nav-link {{ Route::is('reports.studentInfo') ? 'active' : '' }}" href="{{ route('reports.studentInfo') }}">
+                <i class="fa fa-user-graduate me-2" style="font-size: 10px;"></i> Student Info
+            </a>
+        </li>
+    </ul>
+</li>
+@endif
         {{-- EXTRA CONTENT --}}
         @if ($usr->can('aboutUsAdd') || $usr->can('aboutUsView') || $usr->can('aboutUsDelete') || $usr->can('aboutUsUpdate') || $usr->can('messageAdd') || $usr->can('messageView') || $usr->can('messageDelete') || $usr->can('messageUpdate') || $usr->can('extraPageAdd') || $usr->can('extraPageView') || $usr->can('extraPageDelete') || $usr->can('extraPageUpdate') || $usr->can('socialLinkAdd') || $usr->can('socialLinkView') || $usr->can('socialLinkDelete') || $usr->can('socialLinkUpdate') || $usr->can('reviewAdd') || $usr->can('reviewView') || $usr->can('reviewDelete') || $usr->can('reviewUpdate'))
         <li class="sidebar-title">
