@@ -118,9 +118,10 @@ class AuthController extends Controller
     public function dashboard(Request $request)
 {
     try {
-        // ইউজার এবং তার রিলেটেড ডাটা লোড করা
+        // ইউজার এবং তার রিলেটেড ডাটা (সাথে schoolClass) লোড করা
         $user = $request->user()->load([
             'customer', 
+            'schoolClass', // ক্লাস ইনফো লোড করার জন্য
             'activeSubscription.package', 
             'subscriptions.package', 
             'payments.package'
@@ -131,11 +132,14 @@ class AuthController extends Controller
             'message' => 'User dashboard data retrieved successfully',
             'data' => [
                 'user_info' => [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                    'phone' => $user->phone,
-                    'image' => $user->image ? asset($user->image) : null,
+                    'id'         => $user->id,
+                    'name'       => $user->name,
+                    'email'      => $user->email,
+                    'phone'      => $user->phone,
+                    'image'      => $user->image ? asset($user->image) : null,
+                    // ক্লাস আইডি এবং নাম যুক্ত করা হলো
+                    'class_id'   => $user->class_id,
+                    'class_name' => $user->schoolClass ? $user->schoolClass->name_en : null, 
                 ],
                 
                 // বর্তমান একটিভ প্যাকেজ
@@ -149,7 +153,7 @@ class AuthController extends Controller
                 
                 // আপডেট করা স্ট্যাটাস সেকশন
                 'stats' => [
-                    'total_packages_bought' => $user->subscriptions()->count(), // মোট কতটি প্যাকেজ কেনা হয়েছে
+                    'total_packages_bought' => $user->subscriptions()->count(),
                 ]
             ]
         ], 200);
@@ -161,7 +165,6 @@ class AuthController extends Controller
         ], 500);
     }
 }
-
     /**
      * Logout API
      */

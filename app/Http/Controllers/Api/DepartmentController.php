@@ -74,7 +74,7 @@ class DepartmentController extends Controller
     public function getDepartmentsByClass()
     {
 
-        $classId = request()->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
+        $classId = request()->class_id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
         try {
             // ক্লাস চেক করা
             $class = SchoolClass::where('id', $classId)->where('status', 1)->first();

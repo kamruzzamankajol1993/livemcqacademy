@@ -42,7 +42,7 @@ class PackageController extends Controller
      */
     public function show(Request $request)
     {
-        $id =  $request->id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
+        $id =  $request->package_id; // URL থেকে ID প্যারামিটার নেওয়া হচ্ছে
         try {
             $package = Package::with('features')->where('status', 1)->findOrFail($id);
 

@@ -67,6 +67,7 @@ Route::get('/department_wise_exam', [ExamController::class, 'departmentWise']); 
 Route::get('/subject_wise_exam', [ExamController::class, 'subjectWise']);
 Route::get('/exam_detail', [ExamController::class, 'show']);
 Route::post('/submit_exam', [ExamController::class, 'submitExam']);
+Route::post('/pay_for_exam', [ExamController::class, 'payForExam']);
 // end exam routes
 
 
