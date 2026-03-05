@@ -21,7 +21,7 @@ use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\SelfTestController;
 use App\Http\Controllers\Api\BookController;
-
+use App\Http\Controllers\Api\TopicWiseExamController;
 
 
 // Public Routes
@@ -33,9 +33,32 @@ Route::post('/forgot-password/send-otp', [AuthController::class, 'sendOtp']);
 Route::post('/forgot-password/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword']);
 
+
 // Protected Routes (Login required)
 Route::middleware('auth:sanctum')->group(function () {
 
+
+// --- Topic/Subject Wise Custom Exam ---
+    // ১. কাস্টম এক্সাম শুরু (ইউজার লিমিট ও টাইম দিবে)
+    Route::post('/custom-exam/start', [TopicWiseExamController::class, 'startExam']);
+    
+    // ২. বোর্ড/ইনস্টিটিউট স্পেশাল এক্সাম (লিমিট ও টাইম অটো আসবে)
+    Route::post('/special-exam/start', [TopicWiseExamController::class, 'startSpecialExam']);
+    
+    // ৩. উত্তর সাবমিট করা (উভয় এক্সামের জন্য)
+    Route::post('/custom-exam/submit', [TopicWiseExamController::class, 'submitExam']);
+    
+    // ৪. এক্সাম হিস্ট্রি লিস্ট
+    Route::get('/custom-exam/history', [TopicWiseExamController::class, 'examHistory']);
+    
+    // ৫. নির্দিষ্ট এক্সাম রিভিউ/ডিটেইল
+    Route::get('/custom-exam/history-detail', [TopicWiseExamController::class, 'examHistoryDetail']); // ?exam_id=1
+
+
+    
+
+Route::get('/classes', [ClassController::class, 'index']);
+Route::post('/update-academic-info', [AuthController::class, 'updateAcademicInfo']);
 Route::get('/payment-instructions', [App\Http\Controllers\Api\SubscriptionController::class, 'paymentMethodsins']);
 // start book routes
 Route::get('/book_questions', [BookController::class, 'getQuestionsByFilter']);
@@ -65,6 +88,9 @@ Route::get('/all_exam', [ExamController::class, 'index']); // সকল এক�
 Route::get('/class_wise_exam', [ExamController::class, 'classWise']); // ?class_id=1
 Route::get('/department_wise_exam', [ExamController::class, 'departmentWise']); // ?department_id=1
 Route::get('/subject_wise_exam', [ExamController::class, 'subjectWise']);
+// --- নতুন যুক্ত করা রাউট (বোর্ড এবং প্রতিষ্ঠান ভিত্তিক) ---
+Route::get('/board_wise_exam', [ExamController::class, 'boardWise']); // নির্দিষ্ট বোর্ড আইডি অনুযায়ী 
+Route::get('/institute_wise_exam', [ExamController::class, 'instituteWise']); // নির্দিষ্ট প্রতিষ্ঠান আইডি অনুযায়ী
 Route::get('/exam_detail', [ExamController::class, 'show']);
 Route::post('/submit_exam', [ExamController::class, 'submitExam']);
 Route::post('/pay_for_exam', [ExamController::class, 'payForExam']);
@@ -95,12 +121,11 @@ Route::get('/institutes_type', [InstituteController::class, 'getByType']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories_feature', [CategoryController::class, 'getCategoriesByFeature']);
 Route::get('/all_features', [FeatureController::class, 'index']);
-Route::get('/classes', [ClassController::class, 'index']);
 Route::get('/classes_category', [ClassController::class, 'getClassesByCategory']);
 Route::get('/departments', [DepartmentController::class, 'index']);  
 Route::get('/departments_class', [DepartmentController::class, 'getDepartmentsByClass']);
 Route::get('/subjects', [SubjectController::class, 'index']);
-Route::get('/subjects_filter', [SubjectController::class, 'filterSubjects']);
+Route::get('/my-subjects', [SubjectController::class, 'filterSubjects']);
 Route::get('/sections', [SectionController::class, 'index']);
 Route::get('/sections_filter', [SectionController::class, 'filterSections']);
 Route::get('/chapters', [ChapterController::class, 'index']);

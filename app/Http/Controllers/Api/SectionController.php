@@ -72,66 +72,82 @@ class SectionController extends Controller
      * ২. ফিল্টার সেকশন (Filter Sections)
      * URL: /api/sections/filter?class_id=1
      */
-    public function filterSections(Request $request)
-    {
-        try {
-            $query = Section::with([
-                    'category:id,english_name,bangla_name', 
-                    'class:id,name_en,name_bn', 
-                    'subject:id,name_en,name_bn'
-                ])
-                ->where('status', 1);
+  /**
+ * ২. ইউজারের প্রোফাইল অনুযায়ী সেকশন ফিল্টার (Automatic Filter)
+ * URL: /api/sections_filter
+ */
+public function filterSections(Request $request)
+{
+    try {
+        $user = $request->user();
 
-            // ফিল্টার লজিক
-            if ($request->has('category_id') && !empty($request->category_id)) {
-                $query->where('category_id', $request->category_id);
-            }
-            if ($request->has('class_id') && !empty($request->class_id)) {
-                $query->where('class_id', $request->class_id);
-            }
-            if ($request->has('subject_id') && !empty($request->subject_id)) {
-                $query->where('subject_id', $request->subject_id);
-            }
-
-            // ডাটা গেট করা
-            $sections = $query->select(
-                    'id', 'name_en', 'name_bn', 'slug', 'category_id', 'class_id', 'subject_id', 'serial', 'status'
-                )
-                ->orderBy('serial', 'asc')
-                ->get();
-
-            // ডাটা ট্রান্সফর্ম
-            $sections->transform(function ($item) {
-                if ($item->category) {
-                    $item->category_name_en = $item->category->english_name;
-                    $item->category_name_bn = $item->category->bangla_name;
-                } else {
-                    $item->category_name_en = null;
-                    $item->category_name_bn = null;
-                }
-
-                $item->class_name_en = $item->class->name_en ?? null;
-                $item->class_name_bn = $item->class->name_bn ?? null;
-
-                $item->subject_name_en = $item->subject->name_en ?? null;
-                $item->subject_name_bn = $item->subject->name_bn ?? null;
-
-                unset($item->category, $item->class, $item->subject);
-
-                return $item;
-            });
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Sections retrieved successfully based on filters.',
-                'data' => $sections
-            ], 200);
-
-        } catch (\Exception $e) {
+        // ১. চেক করা ইউজারের ক্লাস আইডি আছে কি না 
+        if (empty($user->class_id)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Please update your academic information (Class) first.',
+                'update_required' => true
+            ], 403);
         }
+
+        $query = Section::with([
+                'category:id,english_name,bangla_name', 
+                'class:id,name_en,name_bn', 
+                'subject:id,name_en,name_bn'
+            ])
+            ->where('status', 1);
+
+        // ২. ইউজারের class_id অনুযায়ী অটো ফিল্টার
+        $query->where('class_id', $user->class_id);
+
+        // ৩. সাবজেক্ট আইডি পাস করলে ওই নির্দিষ্ট সাবজেক্টের সেকশন আসবে
+        if ($request->has('subject_id') && !empty($request->subject_id)) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        // ৪. ক্যাটাগরি আইডি পাস করলে ফিল্টার হবে
+        if ($request->has('category_id') && !empty($request->category_id)) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $sections = $query->select(
+                'id', 'name_en', 'name_bn', 'slug', 'category_id', 'class_id', 'subject_id', 'serial', 'status'
+            )
+            ->orderBy('serial', 'asc')
+            ->get();
+
+        // ৫. ডাটা ট্রান্সফর্ম
+        $sections->transform(function ($item) {
+            if ($item->category) {
+                $item->category_name_en = $item->category->english_name;
+                $item->category_name_bn = $item->category->bangla_name;
+            } else {
+                $item->category_name_en = null;
+                $item->category_name_bn = null;
+            }
+
+            $item->class_name_en = $item->class->name_en ?? null;
+            $item->class_name_bn = $item->class->name_bn ?? null;
+
+            $item->subject_name_en = $item->subject->name_en ?? null;
+            $item->subject_name_bn = $item->subject->name_bn ?? null;
+
+            unset($item->category, $item->class, $item->subject);
+
+            return $item;
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Sections retrieved successfully based on your profile.',
+            'data' => $sections
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
     }
+}
 }

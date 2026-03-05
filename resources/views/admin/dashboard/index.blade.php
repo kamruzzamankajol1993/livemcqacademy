@@ -87,7 +87,7 @@
                                         <td class="ps-3"><strong>{{ $sub->user->name }}</strong><br><small class="text-muted">{{ $sub->user->phone }}</small></td>
                                         <td><span class="badge bg-soft-primary text-primary border">{{ $sub->package->name }}</span></td>
                                         <td class="text-danger fw-bold">{{ $sub->end_date->format('d M, Y') }}</td>
-                                        <td class="text-end pe-3"><a href="{{ route('customer.show', $sub->user->customer->id ?? 0) }}" class="btn btn-sm btn-outline-primary">Profile</a></td>
+                                        <td class="text-end pe-3"><a href="{{ route('student.show', $sub->user->customer->id ?? 0) }}" class="btn btn-sm btn-outline-primary">Profile</a></td>
                                     </tr>
                                     @empty
                                     <tr><td colspan="4" class="text-center py-4 text-muted">No subscriptions expiring soon.</td></tr>

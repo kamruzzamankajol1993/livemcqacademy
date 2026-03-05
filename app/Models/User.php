@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'image',
         'branch_id',
+        'department_id',
         'customer_id',
         'designation_id',
         'is_shareholder',
@@ -98,8 +99,15 @@ class User extends Authenticatable
     return $this->hasMany(ExamResult::class)->orderBy('created_at', 'desc');
 }
 
+// User.php মডেলের ভেতর যুক্ত করুন
+
 public function schoolClass()
 {
     return $this->belongsTo(SchoolClass::class, 'class_id');
+}
+
+public function department()
+{
+    return $this->belongsTo(ClassDepartment::class, 'department_id');
 }
 }

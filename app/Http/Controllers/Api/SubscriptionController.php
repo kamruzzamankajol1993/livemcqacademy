@@ -23,7 +23,7 @@ class SubscriptionController extends Controller
     $request->validate([
         'package_id'     => 'required|exists:packages,id',
         'amount'         => 'required|numeric',
-        'payment_method' => 'required|in:Bkash,Nagad,Rocket,Bank,Card',
+        'payment_method' => 'required',
         'trx_id'         => 'required|unique:payments,trx_id',
     ]);
 
@@ -176,7 +176,7 @@ public function paymentMethodsins()
 
         return response()->json([
             'status' => true,
-            'message' => 'Payment methods retrieved successfully',
+            'message' => 'Payment instruction retrieved successfully',
             'data' => $methods->map(function($item) {
                 return [
                     'id' => $item->id,

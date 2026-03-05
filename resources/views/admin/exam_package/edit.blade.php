@@ -94,9 +94,33 @@
                                         @endforeach
                                     </select>
                                 </div>
+{{-- Board Selection --}}
+<div class="col-md-6 mb-3">
+    <label class="fw-bold">Boards</label>
+    <select name="board_ids[]" id="board_ids" class="form-control select2" multiple>
+        @foreach($boards as $board)
+            <option value="{{ $board->id }}" 
+                {{ (isset($package) && in_array($board->id, $package->board_ids ?? [])) ? 'selected' : '' }}>
+                {{ $board->name_en }}
+            </option>
+        @endforeach
+    </select>
+</div>
 
+{{-- Institute Selection --}}
+<div class="col-md-6 mb-3">
+    <label class="fw-bold">Institutes</label>
+    <select name="institute_ids[]" id="institute_ids" class="form-control select2" multiple>
+        @foreach($institutes as $inst)
+            <option value="{{ $inst->id }}" 
+                {{ (isset($package) && in_array($inst->id, $package->institute_ids ?? [])) ? 'selected' : '' }}>
+                {{ $inst->name_en }}
+            </option>
+        @endforeach
+    </select>
+</div>
                                 {{-- Pricing & Validity --}}
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label class="fw-bold">Exam Type</label>
                                     <select name="exam_type" id="exam_type" class="form-control">
                                         <option value="free" {{ $package->exam_type == 'free' ? 'selected' : '' }}>Free</option>
@@ -104,15 +128,12 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-4 mb-3" id="price_container" style="{{ $package->exam_type == 'paid' ? '' : 'display:none;' }}">
+                                <div class="col-md-6 mb-3" id="price_container" style="{{ $package->exam_type == 'paid' ? '' : 'display:none;' }}">
                                     <label class="fw-bold">Price (TK)</label>
                                     <input type="number" step="0.01" name="price" class="form-control" value="{{ $package->price }}">
                                 </div>
 
-                                <div class="col-md-4 mb-3">
-                                    <label class="fw-bold">Validity (Days)</label>
-                                    <input type="number" name="validity_days" class="form-control" value="{{ $package->validity_days }}" required>
-                                </div>
+                                
 
                                 <div class="col-md-12 mb-3">
                                     <label class="fw-bold">Status</label>
@@ -122,7 +143,20 @@
                                     </select>
                                 </div>
                             </div>
-
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="fw-bold">Start Date & Time (BST) <span class="text-danger">*</span></label>
+        <input type="datetime-local" name="start_time" 
+               value="{{ $package->start_time ? date('Y-m-d\TH:i', strtotime($package->start_time)) : '' }}" 
+               class="form-control" required>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label class="fw-bold">End Date & Time (BST) <span class="text-danger">*</span></label>
+        <input type="datetime-local" name="end_time" 
+               value="{{ $package->end_time ? date('Y-m-d\TH:i', strtotime($package->end_time)) : '' }}" 
+               class="form-control" required>
+    </div>
+</div>
                             <div class="text-end mt-3">
                                 <button type="submit" class="btn btn-info text-white px-5">Update Exam Package</button>
                             </div>

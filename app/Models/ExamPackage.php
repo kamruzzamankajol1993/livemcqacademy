@@ -15,8 +15,12 @@ class ExamPackage extends Model
         'class_department_id', 
         'subject_ids', 
         'chapter_ids', 
+        'board_ids',       // নতুন
+    'institute_ids',   // নতুন
         'topic_ids', 
         'exam_name', 
+        'start_time',
+        'end_time',
         'exam_type', 
         'price', 
         'validity_days', 
@@ -27,9 +31,13 @@ class ExamPackage extends Model
      * JSON কলামগুলোকে অ্যারেতে রূপান্তর করা
      */
     protected $casts = [
-        'subject_ids' => 'array',
-        'chapter_ids' => 'array',
-        'topic_ids' => 'array',
+        'start_time' => 'datetime',
+    'end_time'   => 'datetime',
+       'board_ids' => 'array',     // নতুন
+    'institute_ids' => 'array', // নতুন
+    'subject_ids' => 'array',
+    'chapter_ids' => 'array',
+    'topic_ids' => 'array',
     ];
 
     // --- রিলেশনশিপসমূহ ---
@@ -71,5 +79,16 @@ class ExamPackage extends Model
     public function category()
 {
     return $this->belongsTo(ExamCategory::class, 'exam_category_id');
+}
+
+// রিলেশনশিপ অ্যাক্সেসর
+public function getBoardsAttribute()
+{
+    return \App\Models\Board::whereIn('id', $this->board_ids ?? [])->get();
+}
+
+public function getInstitutesAttribute()
+{
+    return \App\Models\Institute::whereIn('id', $this->institute_ids ?? [])->get();
 }
 }

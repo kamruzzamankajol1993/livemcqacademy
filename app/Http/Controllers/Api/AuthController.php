@@ -16,15 +16,16 @@ class AuthController extends Controller
     /**
      * Customer Registration API
      */
-    public function register(Request $request)
+    /**
+ * ধাপ ১: প্রাথমিক রেজিস্ট্রেশন (নাম, ইমেইল, ফোন, পাসওয়ার্ড)
+ */
+public function register(Request $request)
 {
-    // ১. ভ্যালিডেশন আপডেট (class_id যুক্ত করা হয়েছে)
     $validator = Validator::make($request->all(), [
         'name'     => 'required|string|max:255',
         'email'    => 'required|string|email|max:255|unique:users',
         'phone'    => 'nullable|string|max:20|unique:users',
         'password' => 'required|string|min:6|confirmed',
-        'class_id' => 'required|exists:school_classes,id', // এটি যুক্ত করুন
     ]);
 
     if ($validator->fails()) {
@@ -34,17 +35,14 @@ class AuthController extends Controller
     try {
         DB::beginTransaction();
 
-        // ১. কাস্টমার টেবিল এ ডাটা তৈরি (class_id সহ)
         $customer = Customer::create([
             'name'     => $request->name,
             'phone'    => $request->phone ?? null,
             'email'    => $request->email,
-            'class_id' => $request->class_id, // class_id ইনসার্ট
             'status'   => 1, 
             'slug'     => \Illuminate\Support\Str::slug($request->name) . '-' . time(),
         ]);
 
-        // ২. ইউজার টেবিল এ ডাটা তৈরি (class_id সহ)
         $user = User::create([
             'name'         => $request->name,
             'phone'        => $request->phone ?? null,
@@ -52,8 +50,7 @@ class AuthController extends Controller
             'password'     => Hash::make($request->password),
             'viewpassword' => $request->password,
             'customer_id'  => $customer->id,
-            'class_id'     => $request->class_id, // class_id ইনসার্ট
-            'user_type'    => 2,
+            'user_type'    => 2, // Customer type
             'status'       => 1,
         ]);
 
@@ -65,7 +62,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => 'Registration successful',
+            'message' => 'Step 1: Registration successful. Please select your class.',
             'data'    => ['user' => $user, 'token' => $token]
         ], 201);
 
@@ -75,53 +72,161 @@ class AuthController extends Controller
     }
 }
 
-    /**
-     * Customer Login API
-     */
-    public function login(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
-            'password' => 'required',
+/**
+ * ধাপ ২ ও ৩: ক্লাস এবং ডিপার্টমেন্ট আপডেট করা
+ */
+/**
+ * ধাপ ২ ও ৩: ক্লাস এবং ডিপার্টমেন্ট আপডেট করা
+ */
+public function updateAcademicInfo(Request $request)
+{
+    // ১. ইনপুট ভ্যালিডেশন
+    $validator = Validator::make($request->all(), [
+        'class_id'      => 'required|exists:school_classes,id',
+        'department_id' => 'nullable|exists:class_departments,id',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+    }
+
+    try {
+        $user = $request->user();
+        
+        // ২. ইউজার টেবিলে ক্লাস এবং ডিপার্টমেন্ট আপডেট
+        $user->update([
+            'class_id'      => $request->class_id,
+            'department_id' => $request->department_id
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        // ৩. কাস্টমার টেবিলে সিঙ্ক রাখা (যদি কলাম থাকে)
+        if ($user->customer) {
+            $user->customer->update([
+                'class_id'      => $request->class_id,
+                'department_id' => $request->department_id
+            ]);
         }
 
-        // Check credentials
-        $user = User::where('email', $request->email)->first();
+        // ৪. নতুন ডাটা রেসপন্সে পাঠানোর জন্য রিলেশনগুলো রিফ্রেশ করা
+        $user->load(['schoolClass', 'department']);
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
+        // ৫. বর্তমান সেশনের টোকেন সংগ্রহ (যেহেতু এটি একটি প্রটেক্টেড রিকোয়েস্ট)
+        $token = $request->bearerToken();
 
-        // Generate Token
-        $token = $user->createToken('auth_token')->plainTextToken;
-
+        // ৬. আপনার চাহিদা অনুযায়ী কাস্টম রেসপন্স
         return response()->json([
             'status'  => true,
-            'message' => 'Login successful',
+            'message' => 'Academic info updated successfully',
             'data'    => [
-                'user'  => $user,
+                'user'  => [
+                    'id'                 => $user->id,
+                    'name'               => $user->name,
+                    'email'              => $user->email,
+                    'phone'              => $user->phone,
+                    'image'              => $user->image ? asset($user->image) : null,
+                    
+                    // ক্লাস তথ্য
+                    'class_id'           => $user->class_id,
+                    'class_name'         => $user->schoolClass ? $user->schoolClass->name_en : null,
+                    'class_name_bn'      => $user->schoolClass ? $user->schoolClass->name_bn : null,
+                    
+                    // ডিপার্টমেন্ট তথ্য
+                    'department_id'      => $user->department_id,
+                    'department_name'    => $user->department ? $user->department->name_en : null,
+                    'department_name_bn' => $user->department ? $user->department->name_bn : null,
+                    
+                    'status'             => $user->status,
+                ],
                 'token' => $token
             ]
         ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false, 
+            'message' => 'Failed to update info: ' . $e->getMessage()
+        ], 500);
     }
+}
+
+    /**
+     * Customer Login API
+     */
+    /**
+ * Customer Login API
+ * ক্লাস এবং ডিপার্টমেন্টের তথ্যসহ সম্পূর্ণ লগইন ফাংশন
+ */
+public function login(Request $request)
+{
+    // ১. ভ্যালিডেশন
+    $validator = Validator::make($request->all(), [
+        'email'    => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false, 
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    // ২. ইউজার চেক করা এবং রিলেশন লোড করা (schoolClass ও department)
+    $user = User::with(['schoolClass', 'department'])
+                ->where('email', $request->email)
+                ->first();
+
+    // ৩. পাসওয়ার্ড যাচাই
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Invalid credentials'
+        ], 401);
+    }
+
+    // ৪. টোকেন তৈরি (Sanctum)
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    // ৫. রেসপন্স প্রদান
+    return response()->json([
+        'status'  => true,
+        'message' => 'Login successful',
+        'data'    => [
+            'user'  => [
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'email'           => $user->email,
+                'phone'           => $user->phone,
+                'image'           => $user->image ? asset($user->image) : null,
+                
+                // ক্লাস তথ্য
+                'class_id'        => $user->class_id,
+                'class_name'      => $user->schoolClass ? $user->schoolClass->name_en : null,
+                'class_name_bn'   => $user->schoolClass ? $user->schoolClass->name_bn : null,
+                
+                // ডিপার্টমেন্ট তথ্য
+                'department_id'   => $user->department_id,
+                'department_name' => $user->department ? $user->department->name_en : null,
+                'department_name_bn' => $user->department ? $user->department->name_bn : null,
+                
+                'status'          => $user->status,
+            ],
+            'token' => $token
+        ]
+    ], 200);
+}
 
     /**
      * Dashboard / Profile API
      */
-    public function dashboard(Request $request)
+   public function dashboard(Request $request)
 {
     try {
-        // ইউজার এবং তার রিলেটেড ডাটা (সাথে schoolClass) লোড করা
+        // ইউজার এবং তার রিলেটেড ডাটা (সাথে schoolClass এবং department) লোড করা
         $user = $request->user()->load([
             'customer', 
-            'schoolClass', // ক্লাস ইনফো লোড করার জন্য
+            'schoolClass', 
+            'department', // নতুন রিলেশন লোড
             'activeSubscription.package', 
             'subscriptions.package', 
             'payments.package'
@@ -132,26 +237,22 @@ class AuthController extends Controller
             'message' => 'User dashboard data retrieved successfully',
             'data' => [
                 'user_info' => [
-                    'id'         => $user->id,
-                    'name'       => $user->name,
-                    'email'      => $user->email,
-                    'phone'      => $user->phone,
-                    'image'      => $user->image ? asset($user->image) : null,
-                    // ক্লাস আইডি এবং নাম যুক্ত করা হলো
-                    'class_id'   => $user->class_id,
-                    'class_name' => $user->schoolClass ? $user->schoolClass->name_en : null, 
+                    'id'              => $user->id,
+                    'name'            => $user->name,
+                    'email'           => $user->email,
+                    'phone'           => $user->phone,
+                    'image'           => $user->image ? asset($user->image) : null,
+                    // ক্লাস তথ্য
+                    'class_id'        => $user->class_id,
+                    'class_name'      => $user->schoolClass ? $user->schoolClass->name_en : null, 
+                    // ডিপার্টমেন্ট তথ্য
+                    'department_id'   => $user->department_id,
+                    'department_name' => $user->department ? $user->department->name_en : null,
                 ],
                 
-                // বর্তমান একটিভ প্যাকেজ
-                'active_subscription' => $user->activeSubscription,
-                
-                // সব প্যাকেজের তালিকা
+                'active_subscription'  => $user->activeSubscription,
                 'subscription_history' => $user->subscriptions,
-                
-                // পেমেন্ট হিস্ট্রি
-                'payment_history' => $user->payments,
-                
-                // আপডেট করা স্ট্যাটাস সেকশন
+                'payment_history'      => $user->payments,
                 'stats' => [
                     'total_packages_bought' => $user->subscriptions()->count(),
                 ]

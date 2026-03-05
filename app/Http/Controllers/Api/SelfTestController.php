@@ -25,7 +25,7 @@ class SelfTestController extends Controller
             'classes' => SchoolClass::where('status', 1)->get(['id', 'name_en', 'name_bn']),
             'subjects' => Subject::where('status', 1)->get(['id', 'name_en', 'name_bn']),
             // রেফারেন্সের জন্য এক্সাম টেবিল থেকে সেলফ টেস্ট ক্যাটাগরির ডিফল্ট লিমিট (ঐচ্ছিক)
-            'default_setup' => Exam::where('status', 1)->first(['total_questions', 'time_duration','pass_mark', 'per_question_mark'])
+            'default_setup' => Exam::where('status', 1)->first(['total_questions', 'exam_duration_minutes','pass_mark', 'per_question_mark'])
         ];
 
         return response()->json([
@@ -45,7 +45,7 @@ class SelfTestController extends Controller
             'class_id'       => 'required|exists:school_classes,id',
             'subject_id'     => 'required|exists:subjects,id',
             'question_limit' => 'required|integer|min:1',
-            'time_duration'  => 'required|integer|min:1',
+            'exam_duration_minutes'  => 'required|integer|min:1',
             'negative_mark'  => 'required|numeric',
             'pass_mark'      => 'required|numeric',
         ]);
@@ -60,7 +60,7 @@ class SelfTestController extends Controller
                 'class_id'          => $request->class_id,
                 'subject_id'        => $request->subject_id,
                 'question_limit'    => $request->question_limit,
-                'time_duration'     => $request->time_duration,
+                'time_duration'     => $request->exam_duration_minutes,
                 'negative_mark'     => $request->negative_mark,
                 'pass_mark'         => $request->pass_mark,
                 'per_question_mark' => 1.00, // ডিফল্ট ১ রাখা হয়েছে

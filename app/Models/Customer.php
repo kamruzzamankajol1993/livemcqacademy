@@ -18,6 +18,7 @@ class Customer extends Authenticatable
         'discount_in_percent',
         'slug',
         'source',
+        'department_id',
         'type',
         'name',
         'email',

@@ -168,7 +168,7 @@ public function submitExam(Request $request)
         return ExamPackage::with([
             'category:id,name_en,name_bn',
             'schoolClass:id,name_en,name_bn',
-            'department:id,name_en,name_bn'
+            'department:id,name_en,name_bn',
         ])->where('status', 1);
     }
 
@@ -200,22 +200,68 @@ public function submitExam(Request $request)
     }
 
     // ২. Class Wise লিস্ট
-    public function classWise(Request $request)
-    {
+    // ২. ইউজারের প্রোফাইল অনুযায়ী Class Wise এক্সাম লিস্ট
+public function classWise(Request $request)
+{
+    try {
+        $user = auth()->user();
+
+        // ১. চেক করা ইউজারের প্রোফাইলে ক্লাস আইডি আছে কি না
+        if (empty($user->class_id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'আপনার প্রোফাইলে ক্লাস সেট করা নেই। দয়া করে আগে একাডেমিক তথ্য আপডেট করুন।',
+                'update_required' => true
+            ], 403);
+        }
+
+        // ২. ইউজারের class_id অনুযায়ী অটো ফিল্টার
         $packages = $this->getExamPackagesQuery()
-            ->where('class_id', $request->class_id)
-            ->latest()->paginate(10);
+            ->where('class_id', $user->class_id)
+            ->latest()
+            ->paginate(10);
+
         return $this->formatResponse($packages);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     // ৩. Department Wise লিস্ট
-    public function departmentWise(Request $request)
-    {
+    // ৩. ইউজারের প্রোফাইল অনুযায়ী Department Wise লিস্ট
+public function departmentWise(Request $request)
+{
+    try {
+        $user = auth()->user();
+
+        // ১. চেক করা ইউজারের প্রোফাইলে ডিপার্টমেন্ট আইডি আছে কি না
+        if (empty($user->department_id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'আপনার প্রোফাইলে কোনো ডিপার্টমেন্ট সেট করা নেই।',
+                'no_department' => true
+            ], 404);
+        }
+
+        // ২. ইউজারের department_id অনুযায়ী অটো ফিল্টার
         $packages = $this->getExamPackagesQuery()
-            ->where('class_department_id', $request->department_id)
-            ->latest()->paginate(10);
+            ->where('class_department_id', $user->department_id)
+            ->latest()
+            ->paginate(10);
+
         return $this->formatResponse($packages);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     // ৪. Subject Wise লিস্ট
     public function subjectWise(Request $request)
@@ -225,9 +271,29 @@ public function submitExam(Request $request)
             ->latest()->paginate(10);
         return $this->formatResponse($packages);
     }
+public function boardWise(Request $request)
+{
+    // এখানে সিঙ্গেল board_id পাস হবে
+    $packages = $this->getExamPackagesQuery()
+        ->whereJsonContains('board_ids', (string)$request->board_id)
+        ->latest()->paginate(10);
+    return $this->formatResponse($packages);
+}
 
-    /**
- * একটি নির্দিষ্ট এক্সাম প্যাকেজের বিস্তারিত তথ্য
+/**
+ * ৬. Institute Wise এক্সাম প্যাকেজ লিস্ট
+ * প্যাটার্ন: subjectWise() এর মতো
+ */
+public function instituteWise(Request $request)
+{
+    // এখানে সিঙ্গেল institute_id পাস হবে
+    $packages = $this->getExamPackagesQuery()
+        ->whereJsonContains('institute_ids', (string)$request->institute_id)
+        ->latest()->paginate(10);
+    return $this->formatResponse($packages);
+}
+ /**
+ * একটি নির্দিষ্ট এক্সাম প্যাকেজের বিস্তারিত তথ্য (আপডেটেড)
  */
 public function show(Request $request)
 {
@@ -238,7 +304,6 @@ public function show(Request $request)
         return response()->json(['status' => 'error', 'message' => 'ID parameter is required'], 400);
     }
 
-    // আপনার দেওয়া কোড: রিলেশনসহ প্যাকেজ ডাটা লোড করা
     $package = ExamPackage::with([
         'category:id,name_en,name_bn',
         'schoolClass:id,name_en,name_bn',
@@ -249,23 +314,19 @@ public function show(Request $request)
         return response()->json(['message' => 'Exam Package not found'], 404);
     }
 
-    // আপনার দেওয়া কোড: প্যাকেজ ক্যাটাগরি অনুযায়ী Exam Setup ডাটা আনা
     $examSetups = Exam::whereJsonContains('exam_category_ids', (string)$package->exam_category_id)
         ->where('status', 1)
         ->get()
         ->makeHidden(['exam_category_ids']);
 
-    // --- নতুন লজিক: লিমিট এবং এক্সেস কন্ট্রোল চেক ---
-
-    // ইউজারের অ্যাক্টিভ সাবস্ক্রিপশন চেক করা
     $activeSub = $user->activeSubscription; 
     
-    // সিঙ্গেল পেমেন্ট ভ্যালিডিটি চেক (যদি আলাদাভাবে কিনে থাকে)
+    // সিঙ্গেল পেমেন্ট ভ্যালিডিটি চেক (expire_date কলামের সাথে চেক হবে)
     $singlePurchase = \DB::table('exam_payments')
         ->where('user_id', $user->id)
         ->where('exam_package_id', $package->id)
         ->where('status', 'completed')
-        ->where('expire_date', '>=', now()->format('Y-m-d'))
+        ->where('expire_date', '>=', now()->format('Y-m-d H:i:s')) // BST অনুযায়ী চেক
         ->first();
 
     $can_exam = false;
@@ -273,38 +334,47 @@ public function show(Request $request)
     $message = "";
     $remaining_limit = null;
 
-    if ($package->exam_type == 'free') {
-        $can_exam = true;
-        $message = "এটি একটি ফ্রি এক্সাম।";
-    } else {
-        // পেইড এক্সাম লজিক
-        if ($activeSub) {
-            // ইউজারের নিজস্ব সাবস্ক্রিপশন থেকে লিমিট চেক করা
-            $remaining_limit = $activeSub->remaining_exam_limit;
+    // --- সময় ভিত্তিক এক্সেস কন্ট্রোল (নতুন লজিক) ---
+    $now = now()->timezone('Asia/Dhaka');
+    $startTime = \Carbon\Carbon::parse($package->start_time, 'Asia/Dhaka');
+    $endTime = \Carbon\Carbon::parse($package->end_time, 'Asia/Dhaka');
 
-            if (strtolower($remaining_limit) == 'unlimited' || (int)$remaining_limit > 0) {
-                $can_exam = true;
-                $message = "আপনার প্যাকেজ অনুযায়ী এক্সেস আছে। অবশিষ্ট লিমিট: " . $remaining_limit;
+    if ($now->lt($startTime)) {
+        $can_exam = false;
+        $message = "পরীক্ষাটি এখনও শুরু হয়নি। শুরু হবে: " . $startTime->format('d M, h:i A');
+    } elseif ($now->gt($endTime)) {
+        $can_exam = false;
+        $message = "দুঃখিত, এই পরীক্ষার সময় অতিবাহিত হয়ে গেছে।";
+    } else {
+        // নির্ধারিত সময়ের ভেতরে থাকলে পেমেন্ট ও সাবস্ক্রিপশন চেক হবে
+        if ($package->exam_type == 'free') {
+            $can_exam = true;
+            $message = "এটি একটি ফ্রি এক্সাম।";
+        } else {
+            if ($activeSub) {
+                $remaining_limit = $activeSub->remaining_exam_limit;
+                if (strtolower($remaining_limit) == 'unlimited' || (int)$remaining_limit > 0) {
+                    $can_exam = true;
+                    $message = "আপনার প্যাকেজ অনুযায়ী এক্সেস আছে।";
+                } else {
+                    if ($singlePurchase) {
+                        $can_exam = true;
+                        $message = "প্যাকেজ লিমিট শেষ হলেও আপনার আলাদা ক্রয়ের মেয়াদ আছে।";
+                    } else {
+                        $can_exam = false;
+                        $must_pay = true;
+                        $message = "প্যাকেজ লিমিট শেষ। পুনরায় পরীক্ষা দিতে পেমেন্ট করুন।";
+                    }
+                }
             } else {
-                // লিমিট শেষ হলে সিঙ্গেল পারচেজ চেক
                 if ($singlePurchase) {
                     $can_exam = true;
-                    $message = "প্যাকেজ লিমিট শেষ হলেও আপনার আলাদা ক্রয়ের মেয়াদ আছে।";
+                    $message = "আপনার ক্রয়ের মেয়াদ আছে। পরীক্ষা দিতে পারেন।";
                 } else {
                     $can_exam = false;
                     $must_pay = true;
-                    $message = "আপনার প্যাকেজ লিমিট শেষ। পুনরায় পরীক্ষা দিতে পেমেন্ট করুন।";
+                    $message = "এই পরীক্ষাটি দিতে আপনাকে পেমেন্ট করতে হবে।";
                 }
-            }
-        } else {
-            // সাবস্ক্রিপশন নেই, সিঙ্গেল পারচেজ চেক
-            if ($singlePurchase) {
-                $can_exam = true;
-                $message = "আপনার ক্রয়ের মেয়াদ আছে। পরীক্ষা দিতে পারেন।";
-            } else {
-                $can_exam = false;
-                $must_pay = true;
-                $message = "এই পরীক্ষাটি দিতে আপনাকে পেমেন্ট করতে হবে।";
             }
         }
     }
@@ -319,7 +389,8 @@ public function show(Request $request)
                 'must_pay' => $must_pay,
                 'message' => $message,
                 'remaining_limit' => $remaining_limit,
-                'validity_days' => $package->validity_days,
+                'start_time' => $package->start_time, // নতুন
+                'end_time' => $package->end_time,     // নতুন
                 'payment_options' => $must_pay ? ['bkash', 'nagad', 'manual'] : []
             ]
         ]
@@ -354,44 +425,78 @@ public function getQuestions(Request $request)
     $query = McqQuestion::where('class_id', $package->class_id)
                         ->where('status', 1);
 
-    /**
-     * ক্যাটাগরি অনুযায়ী ফিল্টারিং লজিক:
-     * প্যাকেজের subject_ids, chapter_ids, topic_ids যেহেতু JSON/Array, 
-     * কিন্তু McqQuestion টেবিলে id গুলো Normal, তাই whereIn ব্যবহার করা হয়েছে।
-     */
-
-    // ক্যাটাগরি ৫, ৬, ৭ সবার জন্যই সাবজেক্ট ফিল্টার হবে
-    if ($package->exam_category_id == 5 || $package->exam_category_id == 6 || $package->exam_category_id == 7) {
+    // ডিফল্ট ক্যাটাগরি ফিল্টারিং
+    if (in_array($package->exam_category_id, [5, 6, 7])) {
         $query->whereIn('subject_id', (array)$package->subject_ids);
     }
-
-    // ক্যাটাগরি ৬ এবং ৭ এর জন্য চ্যাপ্টার ফিল্টার হবে
-    if ($package->exam_category_id == 6 || $package->exam_category_id == 7) {
+    if (in_array($package->exam_category_id, [6, 7])) {
         $query->whereIn('chapter_id', (array)$package->chapter_ids);
     }
-
-    // শুধুমাত্র ক্যাটাগরি ৭ এর জন্য টপিক ফিল্টার হবে
     if ($package->exam_category_id == 7) {
         $query->whereIn('topic_id', (array)$package->topic_ids);
     }
 
-    // ৪. ফাইনাল ডাটা গেট করা
-    $questions = $query->inRandomOrder()
-                       ->limit($limit)
-                       ->get();
+    // --- বোর্ড এবং ইনস্টিটিউট ফিল্টারিং লজিক ---
+
+   // --- বোর্ড এবং ইনস্টিটিউট ফিল্টারিং লজিক ---
+    $isBoardExam = !empty($package->board_ids);
+
+    if ($isBoardExam) {
+        // ১. যদি প্যাকেজে বোর্ড আইডি থাকে (বোর্ডের ক্ষেত্রে লিমিট নাই) 
+        $query->where(function($q) use ($package) {
+            foreach ((array)$package->board_ids as $boardId) {
+                $q->orWhereJsonContains('board_ids', (string)$boardId);
+            }
+        });
+        $questions = $query->inRandomOrder()->get(); // সব প্রশ্ন আসবে 
+    } 
+    elseif (!empty($package->institute_ids)) {
+        // ২. যদি প্যাকেজে ইনস্টিটিউট আইডি থাকে (ইনস্টিটিউটের ক্ষেত্রে লিমিট আছে) 
+        $query->where(function($q) use ($package) {
+            foreach ((array)$package->institute_ids as $instituteId) {
+                $q->orWhereJsonContains('institute_ids', (string)$instituteId);
+            }
+        });
+        $questions = $query->inRandomOrder()->limit($limit)->get();
+    } 
+    else {
+        // ৩. সাধারণ এক্সাম প্যাকেজ 
+        $questions = $query->inRandomOrder()->limit($limit)->get();
+    }
+
+   // ৫. শুধুমাত্র নির্দিষ্ট কলামগুলো সিলেক্ট করা (Data Transformation) 
+    $formattedQuestions = $questions->map(function ($q) {
+        return [
+            'id'                => $q->id,
+            'question'          => $q->question,
+            'option_1'          => $q->option_1,
+            'option_2'          => $q->option_2,
+            'option_3'          => $q->option_3,
+            'option_4'          => $q->option_4,
+            // 'answer'            => $q->answer,
+            // 'short_description' => $q->short_description,
+        ];
+    });
+
+    // ৬. ডাইনামিক রেসপন্স (বোর্ড এক্সামে লিমিট হাইড) 
+    $examInfo = [
+        'package_id'  => $package->id,
+        'exam_name'   => $package->exam_name,
+        'category_id' => $package->exam_category_id,
+        'total_found' => $questions->count(),
+    ];
+
+    if (!$isBoardExam) {
+        $examInfo['question_limit'] = $limit;
+    }
 
     return response()->json([
-        'status' => 'success',
-        'exam_info' => [
-            'package_id' => $package->id,
-            'exam_name' => $package->exam_name,
-            'category_id' => $package->exam_category_id,
-            'question_limit' => $limit,
-            'total_found' => $questions->count()
-        ],
-        'questions' => $questions
+        'status'    => 'success',
+        'exam_info' => $examInfo,
+        'questions' => $formattedQuestions
     ]);
 }
+
 
 public function payForExam(Request $request)
 {
@@ -403,8 +508,8 @@ public function payForExam(Request $request)
 
     $examPackage = ExamPackage::find($request->exam_package_id);
     
-    // validity_days অনুযায়ী expire_date ক্যালকুলেট করা
-    $expireDate = now()->addDays($examPackage->validity_days)->format('Y-m-d');
+    // validity_days এর বদলে প্যাকেজের end_time কেই expire_date হিসেবে সেট করা হয়েছে
+    $expireDate = $examPackage->end_time;
 
     $data = [
         'user_id' => auth()->id(),
@@ -413,8 +518,8 @@ public function payForExam(Request $request)
         'amount' => $request->amount,
         'expire_date' => $expireDate,
         'status' => ($request->payment_method == 'manual') ? 'pending' : 'completed',
-        'created_at' => now(),
-        'updated_at' => now(),
+        'created_at' => now()->timezone('Asia/Dhaka'),
+        'updated_at' => now()->timezone('Asia/Dhaka'),
     ];
 
     if ($request->payment_method == 'manual') {
@@ -427,8 +532,8 @@ public function payForExam(Request $request)
     return response()->json([
         'status' => 'success',
         'message' => ($request->payment_method == 'manual') 
-            ? 'আপনার ম্যানুয়াল পেমেন্টটি পেন্ডিং আছে। অ্যাডমিন অ্যাপ্রুভ করলে পরীক্ষা দিতে পারবেন।' 
-            : "পেমেন্ট সফল। আপনি আগামী $examPackage->validity_days দিন পর্যন্ত এই পরীক্ষাটি দিতে পারবেন।"
+            ? 'আপনার ম্যানুয়াল পেমেন্টটি পেন্ডিং আছে।' 
+            : "পেমেন্ট সফল। আপনি " . \Carbon\Carbon::parse($expireDate)->format('d M, h:i A') . " পর্যন্ত এই পরীক্ষাটি দিতে পারবেন।"
     ]);
 }
 

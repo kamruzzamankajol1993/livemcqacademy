@@ -27,6 +27,14 @@
                                         <td><strong>{{ $package->exam_name }}</strong></td>
                                     </tr>
                                     <tr>
+    <th>Exam Schedule (BST)</th>
+    <td>
+        <span class="badge bg-success">Start: {{ date('d M Y, h:i A', strtotime($package->start_time)) }}</span>
+        <br>
+        <span class="badge bg-danger">End: {{ date('d M Y, h:i A', strtotime($package->end_time)) }}</span>
+    </td>
+</tr>
+                                    <tr>
     <th width="40%">Category</th>
     <td>{{ $package->category->name_en ?? '--' }}</td>
 </tr>
@@ -63,8 +71,26 @@
                                 </div>
                             </div>
                         </div>
-
-                        <hr>
+                          <hr>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <strong>Included Boards:</strong>
+        <p>
+            @foreach($package->boards as $board)
+                <span class="badge bg-secondary">{{ $board->name_en }}</span>
+            @endforeach
+        </p>
+    </div>
+    <div class="col-md-6">
+        <strong>Included Institutes:</strong>
+        <p>
+            @foreach($package->institutes as $inst)
+                <span class="badge bg-info">{{ $inst->name_en }}</span>
+            @endforeach
+        </p>
+    </div>
+</div>
+                      
 
                         <div class="row mt-4">
                             {{-- Subjects Column --}}

@@ -11,6 +11,7 @@ use App\Models\Chapter;
 use App\Models\Topic;
 use Illuminate\Http\Request;
 use App\Models\ExamCategory; // Added this
+use Carbon\Carbon;
 class ExamPackageController extends Controller
 {
     /**
@@ -49,17 +50,23 @@ class ExamPackageController extends Controller
      */
    public function create()
 {
-    $categories = ExamCategory::where('status', 1)->get(); // Added this
+$boards = \App\Models\Board::where('status', 1)->get();
+    $institutes = \App\Models\Institute::where('status', 1)->get();
+
+    $categories = ExamCategory::where('status', 1)->whereNotIn('id',[1,3])->get(); // Added this
     $classes = SchoolClass::where('status', 1)->orderBy('serial', 'asc')->get();
-    return view('admin.exam_package.create', compact('classes', 'categories'));
+    return view('admin.exam_package.create', compact('boards', 'institutes','classes', 'categories'));
 }
 
 public function edit($id)
 {
+$boards = \App\Models\Board::where('status', 1)->get();
+    $institutes = \App\Models\Institute::where('status', 1)->get();
+
     $package = ExamPackage::findOrFail($id);
-    $categories = ExamCategory::where('status', 1)->get(); // Added this
+    $categories = ExamCategory::where('status', 1)->whereNotIn('id',[1,3])->get(); // Added this
     $classes = SchoolClass::where('status', 1)->get();
-    return view('admin.exam_package.edit', compact('package', 'classes', 'categories'));
+    return view('admin.exam_package.edit', compact('boards', 'institutes','package', 'classes', 'categories'));
 }
 
     /**
@@ -72,11 +79,20 @@ public function edit($id)
             'exam_name'     => 'required|string|max:255',
             'exam_type'     => 'required|in:free,paid',
             'validity_days' => 'required|integer',
+            'start_time' => 'required|date',
+    'end_time'   => 'required|date|after:start_time',
             'price'         => 'required_if:exam_type,paid',
         ]);
 
+        // ডাটা ধরার পর নির্দিষ্ট টাইমজোনে কনভার্ট করা
+    $data = $request->all();
+    
+    // Asia/Dhaka টাইমজোনে সেট করা
+    $data['start_time'] = Carbon::parse($request->start_time)->timezone('Asia/Dhaka');
+    $data['end_time']   = Carbon::parse($request->end_time)->timezone('Asia/Dhaka');
+
         // JSON কলামগুলোর জন্য অ্যারে ডাটা সেভ হবে
-        ExamPackage::create($request->all());
+        ExamPackage::create($data);
 
         return redirect()->back()->with('success', 'Exam Package Created Successfully!');
     }
@@ -87,12 +103,24 @@ public function edit($id)
      * ডাটা আপডেট
      */
     public function update(Request $request, $id)
-    {
-        $package = ExamPackage::findOrFail($id);
-        $package->update($request->all());
+{
+    $request->validate([
+        'start_time' => 'required|date',
+        'end_time'   => 'required|date|after:start_time',
+    ]);
 
-        return redirect()->back()->with('success', 'Exam Package Updated!');
-    }
+    $package = \App\Models\ExamPackage::findOrFail($id);
+    
+    $data = $request->all();
+    
+    // আপডেট করার সময়ও টাইমজোন নিশ্চিত করা
+    $data['start_time'] = Carbon::parse($request->start_time)->timezone('Asia/Dhaka');
+    $data['end_time']   = Carbon::parse($request->end_time)->timezone('Asia/Dhaka');
+
+    $package->update($data);
+
+    return redirect()->back()->with('success', 'Package updated successfully!');
+}
 
     /**
      * ডাটা ডিলিট

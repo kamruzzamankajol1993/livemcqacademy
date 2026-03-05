@@ -33,46 +33,55 @@ class SubjectController extends Controller
     }
 
     /**
-     * ২. ফিল্টার সাবজেক্ট (Filter Subjects)
-     * URL: /api/subjects/filter?class_id=1&department_id=2
-     */
-    public function filterSubjects(Request $request)
-    {
-        try {
-            $query = Subject::with([
-                    'classes:id,name_en,name_bn', 
-                    'departments:id,name_en,name_bn'
-                ])
-                ->where('status', 1);
+ * ২. ইউজারের প্রোফাইল অনুযায়ী সাবজেক্ট ফিল্টার (Automatic Filter)
+ * URL: /api/subjects_filter
+ */
+public function filterSubjects(Request $request)
+{
+    try {
+        $user = $request->user();
 
-            // ক্লাস ফিল্টার
-            if ($request->has('class_id') && !empty($request->class_id)) {
-                $query->whereHas('classes', function ($q) use ($request) {
-                    $q->where('school_classes.id', $request->class_id);
-                });
-            }
-
-            // ডিপার্টমেন্ট ফিল্টার
-            if ($request->has('department_id') && !empty($request->department_id)) {
-                $query->whereHas('departments', function ($q) use ($request) {
-                    $q->where('class_departments.id', $request->department_id);
-                });
-            }
-
-            // ডাটা সিলেকশন ও পেজিনেশন
-            $subjects = $query->select('id', 'name_en', 'name_bn', 'slug', 'color', 'icon', 'serial', 'status')
-                ->orderBy('serial', 'asc')
-                ->simplePaginate(20); 
-
-            return $this->formatResponse($subjects, 'Subjects retrieved successfully based on filters.');
-
-        } catch (\Exception $e) {
+        // ১. চেক করা ইউজারের ক্লাস আইডি আছে কি না
+        if (empty($user->class_id)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Please update your academic information (Class) first.',
+                'update_required' => true
+            ], 403); // Forbidden access until profile update
         }
+
+        $query = Subject::with([
+                'classes:id,name_en,name_bn', 
+                'departments:id,name_en,name_bn'
+            ])
+            ->where('status', 1);
+
+        // ২. ইউজারের class_id অনুযায়ী ফিল্টার
+        $query->whereHas('classes', function ($q) use ($user) {
+            $q->where('school_classes.id', $user->class_id);
+        });
+
+        // ৩. ইউজারের department_id থাকলে সেটি দিয়েও ফিল্টার হবে (যদি না থাকে তবে শুধু ক্লাসের সাবজেক্ট আসবে)
+        if (!empty($user->department_id)) {
+            $query->whereHas('departments', function ($q) use ($user) {
+                $q->where('class_departments.id', $user->department_id);
+            });
+        }
+
+        // ৪. ডাটা সিলেকশন ও পেজিনেশন
+        $subjects = $query->select('id', 'name_en', 'name_bn', 'slug', 'color', 'icon', 'serial', 'status')
+            ->orderBy('serial', 'asc')
+            ->simplePaginate(20); 
+
+        return $this->formatResponse($subjects, 'Subjects retrieved based on your profile.');
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Helper Method: রেসপন্স ফরম্যাট, ইমেজ URL এবং রিলেশন প্রসেসিং
