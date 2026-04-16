@@ -79,7 +79,7 @@ Route::get('/assessment_config', [SelfTestController::class, 'getConfig']);
     Route::get('/assessment_leaderboard', [SelfTestController::class, 'selfTestLeaderboard']);
     Route::get('/assessment_review', [SelfTestController::class, 'reviewSelfTest']);
 // end Self Test Routes
-
+Route::get('/exam-history-detail', [ExamController::class, 'examHistoryDetail']);
 // start exam routes
 Route::get('/exam_history', [ExamController::class, 'examHistory']);
 Route::get('/leaderboard', [ExamController::class, 'leaderboard']);
